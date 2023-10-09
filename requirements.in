@@ -1,2 +1,5 @@
-nbstripout==0.6.1
+black==23.9.1
 ipykernel==6.25.2
+nbstripout==0.6.1
+numpy==1.26.0
+torchvision==0.16.0
