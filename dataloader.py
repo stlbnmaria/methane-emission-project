@@ -12,7 +12,7 @@ transform = transforms.Compose(
     [
         transforms.Lambda(
             lambda image: torch.from_numpy(
-                np.array(image).astype(np.float32)
+                np.array(image).astype(np.float32) / 65535
             ).unsqueeze(0)
         )
     ]
