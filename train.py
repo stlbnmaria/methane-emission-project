@@ -11,7 +11,16 @@ from tempfile import TemporaryDirectory
 from dataloader import load_train_data
 
 
-def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num_epochs=25):
+def train_model(
+    model: models,
+    dataloaders: dict[str, torch.utils.data.DataLoader],
+    criterion: nn,
+    optimizer: optim,
+    scheduler: lr_scheduler,
+    device: torch.device,
+    num_epochs: int = 10,
+) -> models:
+    """ """
     since = time.time()
 
     # Create a temporary directory to save training checkpoints
@@ -87,7 +96,9 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                 epoch_loss = running_loss.compute().item()
                 epoch_acc = acc.compute().item()
 
-                print(f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {auc.compute().item():.4f}")
+                print(
+                    f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {auc.compute().item():.4f}"
+                )
 
                 # deep copy the model
                 if phase == "val" and epoch_acc > best_acc:
@@ -107,7 +118,10 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
     return model
 
 
-def fine_tune(device, dataloaders):
+def fine_tune(
+    device: torch.device, dataloaders: dict[str, torch.utils.data.DataLoader]
+) -> None:
+    """ """
     model_ft = models.resnet18(weights="IMAGENET1K_V1")
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 2)
@@ -124,7 +138,13 @@ def fine_tune(device, dataloaders):
 
     # run fine tuning on pretrained model
     model_ft = train_model(
-        model_ft, dataloaders, criterion, optimizer_ft, exp_lr_scheduler, device, num_epochs=10
+        model_ft,
+        dataloaders,
+        criterion,
+        optimizer_ft,
+        exp_lr_scheduler,
+        device,
+        num_epochs=10,
     )
 
 
@@ -135,4 +155,3 @@ if __name__ == "__main__":
     train_data = load_train_data(data_path, folds=1)
     for dataloaders in train_data:
         fine_tune(device, dataloaders)
-
