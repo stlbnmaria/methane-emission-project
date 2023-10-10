@@ -47,7 +47,7 @@ def get_cv_dataloaders(
             batch_size=32,
             sampler=train_sampler,
         )
-        # sample the validation dataset from a separate dataset 
+        # sample the validation dataset from a separate dataset
         # that doesn't include the image aug transformations.
         valid_loader = torch.utils.data.DataLoader(
             base_data,
@@ -60,12 +60,14 @@ def get_cv_dataloaders(
     return dataloaders
 
 
-def load_train_data(data_path: Path) -> datasets.ImageFolder:
+def load_train_data(data_path: Path, folds: int = 5) -> datasets.ImageFolder:
     """
     Load data for training either with cross validation or train-val-split.
 
     Args:
     :param data_path: path to training images that are in folders per category
+    :param folds: number of folds to split the training data to; if set to 1, a random
+                  split to create one training dataset and one validation dataset will be performed
 
     Returns:
     :returns: list of tuples of training and validation torch data for cross-validation
@@ -82,13 +84,42 @@ def load_train_data(data_path: Path) -> datasets.ImageFolder:
             )
         ]
     )
-
-    # create dataset from folder using torchvision
-    train_dataset = datasets.ImageFolder(
-        data_path, transform=transform, loader=lambda path: Image.open(path)
+    # reduced transformations for validation dataset to not contain augmentation
+    transform_infer = transforms.Compose(
+        [
+            transforms.Lambda(
+                lambda image: torch.from_numpy(
+                    np.array(image).astype(np.float32) / 65535
+                ).unsqueeze(0)
+            )
+        ]
     )
 
-    # get cv splits to perform cross validation
-    train_data = get_cv_dataloaders(train_dataset, train_dataset)
+    # create dataset from folder using torchvision
+    augmented_dataset = datasets.ImageFolder(
+        data_path, transform=transform, loader=lambda path: Image.open(path)
+    )
+    base_dataset = datasets.ImageFolder(
+        data_path, transform=transform_infer, loader=lambda path: Image.open(path)
+    )
+
+    if folds > 1:
+        # get cv splits to perform cross validation
+        train_data = get_cv_dataloaders(augmented_dataset, base_dataset, folds=folds)
+    else:
+        # do a random split for train-val-data
+        train_set, _ = torch.utils.data.random_split(
+            augmented_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(10)
+        )
+        _, val_set = torch.utils.data.random_split(
+            base_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(10)
+        )
+        train_data = [(train_set, val_set)]
 
     return train_data
+
+
+if __name__ == "__main__":
+    data_path = Path("./data/train_data/images/")
+    folds = 5
+    train_data = load_train_data(data_path, folds)
