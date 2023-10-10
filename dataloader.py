@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
-from typing import List, Tuple
+from typing import List
 
 
 def get_cv_dataloaders(
@@ -14,7 +14,7 @@ def get_cv_dataloaders(
     folds: int = 5,
     cv_shuffle: bool = True,
     rands: int = 10,
-) -> List[Tuple[torch.utils.data.DataLoader]]:
+) -> List[dict[str, torch.utils.data.DataLoader]]:
     """
     Divide torch dataset from folder into cv splits for training and validation.
 
@@ -55,12 +55,12 @@ def get_cv_dataloaders(
             sampler=valid_sampler,
         )
 
-        dataloaders.append((train_loader, valid_loader))
+        dataloaders.append({"train": train_loader, "val": valid_loader})
 
     return dataloaders
 
 
-def load_train_data(data_path: Path, folds: int = 5) -> datasets.ImageFolder:
+def load_train_data(data_path: Path, folds: int = 5) -> List[dict[str, torch.utils.data.DataLoader]]:
     """
     Load data for training either with cross validation or train-val-split.
 
@@ -80,8 +80,8 @@ def load_train_data(data_path: Path, folds: int = 5) -> datasets.ImageFolder:
             transforms.Lambda(
                 lambda image: torch.from_numpy(
                     np.array(image).astype(np.float32) / 65535
-                ).unsqueeze(0)
-            )
+                ).repeat(3, 1, 1)
+            ),
         ]
     )
     # reduced transformations for validation dataset to not contain augmentation
@@ -90,8 +90,8 @@ def load_train_data(data_path: Path, folds: int = 5) -> datasets.ImageFolder:
             transforms.Lambda(
                 lambda image: torch.from_numpy(
                     np.array(image).astype(np.float32) / 65535
-                ).unsqueeze(0)
-            )
+                ).repeat(3, 1, 1)
+            ),
         ]
     )
 
@@ -111,9 +111,18 @@ def load_train_data(data_path: Path, folds: int = 5) -> datasets.ImageFolder:
         train_set, _ = torch.utils.data.random_split(
             augmented_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(10)
         )
+        train_loader = torch.utils.data.DataLoader(
+            train_set,
+            batch_size=32,
+        )
         _, val_set = torch.utils.data.random_split(
             base_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(10)
         )
-        train_data = [(train_set, val_set)]
+        valid_loader = torch.utils.data.DataLoader(
+            val_set,
+            batch_size=32,
+        )
+
+        train_data = [{"train": train_loader, "val": valid_loader}]
 
     return train_data
