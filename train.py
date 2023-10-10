@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
-from torcheval.metrics.aggregation.auc import AUC
+from torcheval.metrics import BinaryAUROC, BinaryAccuracy
 from torchvision import models, transforms
 import time
 import os
@@ -27,7 +27,8 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
 
             # Each epoch has a training and validation phase
             for phase in ["train", "val"]:
-                metric = AUC()
+                auc = BinaryAUROC()
+                acc = BinaryAccuracy(threshold=0.5)
 
                 if phase == "train":
                     model.train()  # Set model to training mode
@@ -35,7 +36,6 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
                     model.eval()  # Set model to evaluate mode
 
                 running_loss = 0.0
-                running_corrects = 0
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
@@ -71,8 +71,6 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
 
                         outputs = model(inputs_aug)
                         probs = nn.Softmax(dim=1)(outputs)[:, 1]
-
-                        _, preds = torch.max(outputs, 1)
                         loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase
@@ -82,15 +80,15 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
 
                     # statistics
                     running_loss += loss.item() * inputs_aug.size(0)
-                    running_corrects += torch.sum(preds == labels.data)
-                    metric.update(probs, labels)
+                    auc.update(probs, labels)
+                    acc.update(probs, labels)
                 if phase == "train":
                     scheduler.step()
 
                 epoch_loss = running_loss / dataset_sizes[phase]
-                epoch_acc = running_corrects.double() / dataset_sizes[phase]
+                epoch_acc = acc.compute().item()
 
-                print(f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {metric.compute().item():.4f}")
+                print(f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {auc.compute().item():.4f}")
 
                 # deep copy the model
                 if phase == "val" and epoch_acc > best_acc:
