@@ -117,9 +117,3 @@ def load_train_data(data_path: Path, folds: int = 5) -> datasets.ImageFolder:
         train_data = [(train_set, val_set)]
 
     return train_data
-
-
-if __name__ == "__main__":
-    data_path = Path("./data/train_data/images/")
-    folds = 5
-    train_data = load_train_data(data_path, folds)
