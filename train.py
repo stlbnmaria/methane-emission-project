@@ -59,13 +59,19 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                             data_aug = nn.Sequential(
                                 transforms.Resize(255),
                                 transforms.CenterCrop(224),
+                                transforms.Normalize(
+                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                                ),
                             )
                         if phase == "val":
                             data_aug = nn.Sequential(
                                 transforms.Resize(255),
                                 transforms.CenterCrop(224),
+                                transforms.Normalize(
+                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                                ),
                             )
-                        
+
                         inputs_aug = data_aug(inputs)
                         #######################
 
