@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
-from torcheval.metrics.aggregation.auc import AUC
+from torcheval.metrics import BinaryAUROC, BinaryAccuracy, Mean
 from torchvision import models, transforms
 import time
 import os
@@ -11,7 +11,7 @@ from tempfile import TemporaryDirectory
 from dataloader import load_train_data
 
 
-def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, scheduler, device, num_epochs=25):
+def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num_epochs=25):
     since = time.time()
 
     # Create a temporary directory to save training checkpoints
@@ -27,15 +27,14 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
 
             # Each epoch has a training and validation phase
             for phase in ["train", "val"]:
-                metric = AUC()
+                auc = BinaryAUROC()
+                acc = BinaryAccuracy(threshold=0.5)
+                running_loss = Mean()
 
                 if phase == "train":
                     model.train()  # Set model to training mode
                 else:
                     model.eval()  # Set model to evaluate mode
-
-                running_loss = 0.0
-                running_corrects = 0
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
@@ -71,8 +70,6 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
 
                         outputs = model(inputs_aug)
                         probs = nn.Softmax(dim=1)(outputs)[:, 1]
-
-                        _, preds = torch.max(outputs, 1)
                         loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase
@@ -81,16 +78,16 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
                             optimizer.step()
 
                     # statistics
-                    running_loss += loss.item() * inputs_aug.size(0)
-                    running_corrects += torch.sum(preds == labels.data)
-                    metric.update(probs, labels)
+                    running_loss.update(loss.detach(), weight=len(inputs))
+                    auc.update(probs, labels)
+                    acc.update(probs, labels)
                 if phase == "train":
                     scheduler.step()
 
-                epoch_loss = running_loss / dataset_sizes[phase]
-                epoch_acc = running_corrects.double() / dataset_sizes[phase]
+                epoch_loss = running_loss.compute().item()
+                epoch_acc = acc.compute().item()
 
-                print(f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {metric.compute().item():.4f}")
+                print(f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {auc.compute().item():.4f}")
 
                 # deep copy the model
                 if phase == "val" and epoch_acc > best_acc:
@@ -110,7 +107,7 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
     return model
 
 
-def fine_tune(device, dataloaders, dataset_sizes):
+def fine_tune(device, dataloaders):
     model_ft = models.resnet18(weights="IMAGENET1K_V1")
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 2)
@@ -127,7 +124,7 @@ def fine_tune(device, dataloaders, dataset_sizes):
 
     # run fine tuning on pretrained model
     model_ft = train_model(
-        model_ft, dataloaders, dataset_sizes, criterion, optimizer_ft, exp_lr_scheduler, device, num_epochs=10
+        model_ft, dataloaders, criterion, optimizer_ft, exp_lr_scheduler, device, num_epochs=10
     )
 
 
@@ -137,8 +134,5 @@ if __name__ == "__main__":
     data_path = Path("./data/train_data/images/")
     train_data = load_train_data(data_path, folds=1)
     for dataloaders in train_data:
-        # get sizes of data sets
-        dataset_sizes = {x: len(dataloaders[x].dataset) for x in ["train", "val"]}
-
-        fine_tune(device, dataloaders, dataset_sizes)
+        fine_tune(device, dataloaders)
 
