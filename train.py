@@ -55,10 +55,17 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
                         # data augmentation HERE
-                        data_aug = nn.Sequential(
-                            transforms.Resize(255),
-                            transforms.CenterCrop(224),
-                        )
+                        if phase == "train":
+                            data_aug = nn.Sequential(
+                                transforms.Resize(255),
+                                transforms.CenterCrop(224),
+                            )
+                        if phase == "val":
+                            data_aug = nn.Sequential(
+                                transforms.Resize(255),
+                                transforms.CenterCrop(224),
+                            )
+                        
                         inputs_aug = data_aug(inputs)
                         #######################
 
