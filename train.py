@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 import torch
 import torch.nn as nn
@@ -5,10 +6,17 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 from torcheval.metrics import BinaryAUROC, BinaryAccuracy, Mean
 from torchvision import models, transforms
+from typing import Tuple
 import time
 import os
 from tempfile import TemporaryDirectory
 from dataloader import load_train_data
+
+
+# create and configure logger
+logging.basicConfig(filename="std.log", format="%(message)s", filemode="w")
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def train_model(
@@ -19,7 +27,7 @@ def train_model(
     scheduler: lr_scheduler,
     device: torch.device,
     num_epochs: int = 10,
-) -> models:
+):
     """ """
     since = time.time()
 
@@ -28,11 +36,11 @@ def train_model(
         best_model_params_path = os.path.join(tempdir, "best_model_params.pt")
 
         torch.save(model.state_dict(), best_model_params_path)
-        best_acc = 0.0
+        best_auc = 0.0
 
         for epoch in range(num_epochs):
-            print(f"Epoch {epoch}/{num_epochs - 1}")
-            print("-" * 10)
+            logger.info(f"Epoch {epoch}/{num_epochs - 1}")
+            logger.info("-" * 10)
 
             # Each epoch has a training and validation phase
             for phase in ["train", "val"]:
@@ -95,32 +103,33 @@ def train_model(
 
                 epoch_loss = running_loss.compute().item()
                 epoch_acc = acc.compute().item()
+                epoch_auc = auc.compute().item()
 
-                print(
-                    f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {auc.compute().item():.4f}"
+                logger.info(
+                    f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} AUC: {epoch_auc:.4f}"
                 )
 
                 # deep copy the model
-                if phase == "val" and epoch_acc > best_acc:
-                    best_acc = epoch_acc
+                if phase == "val" and epoch_auc > best_auc:
+                    best_auc = epoch_auc
                     torch.save(model.state_dict(), best_model_params_path)
 
-            print()
+            logger.info("")
 
         time_elapsed = time.time() - since
-        print(
+        logger.info(
             f"Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s"
         )
-        print(f"Best val Acc: {best_acc:4f}")
+        logger.info(f"Best val AUC: {best_auc:4f}")
 
         # load best model weights
         model.load_state_dict(torch.load(best_model_params_path))
-    return model
+    return model, best_auc
 
 
 def fine_tune(
     device: torch.device, dataloaders: dict[str, torch.utils.data.DataLoader]
-) -> None:
+):
     """ """
     model_ft = models.resnet18(weights="IMAGENET1K_V1")
     num_ftrs = model_ft.fc.in_features
@@ -137,21 +146,31 @@ def fine_tune(
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
     # run fine tuning on pretrained model
-    model_ft = train_model(
+    model_ft, auc = train_model(
         model_ft,
         dataloaders,
         criterion,
         optimizer_ft,
         exp_lr_scheduler,
         device,
-        num_epochs=10,
+        num_epochs=2,
     )
+    return model_ft, auc
 
 
 if __name__ == "__main__":
+    folds = 3
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     data_path = Path("./data/train_data/images/")
-    train_data = load_train_data(data_path, folds=1)
+    train_data = load_train_data(data_path, folds=folds)
+    i = 0
+    aucs = []
     for dataloaders in train_data:
-        fine_tune(device, dataloaders)
+        i += 1
+        logger.info("------------------")
+        logger.info(f"Starting fold {i}")
+        model_ft, fold_auc = fine_tune(device, dataloaders)
+        aucs.append(fold_auc)
+
+    logger.info(f"Average val AUC: {sum(aucs)/folds:.4f}")
