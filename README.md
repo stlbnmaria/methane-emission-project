@@ -7,9 +7,9 @@ Authors: Alvaro Calafell, João Melo, Steve Moses, Harshit Shangari, Thomas Schn
 ## Data
 The data consists of satellite images of different locations. There are 428 annotated images and 108 test images. The data is labeled with whether a location contains a methane plume or not. The image size is 64 x 64 pixels with one channel, i.e. grayscale images. Additionally, metadata of the images was provided, incl. longitude, latitude, date and coordinates of the plume. Below example images from the data as well as the geographical locations are displayed.
 
-<p align="center">
-<img src='EDA/example_img.png' width='435'>
-<img src='EDA/map.png' style="margin-left: 10px;" width='500'>
+<p float="left">
+  <img src='EDA/example_img.png' width="46%" />
+  <img src='EDA/map.png' width="53%" /> 
 </p>
 
 ## Setup
