@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torcheval.metrics import BinaryAUROC, BinaryAccuracy, Mean
+import torch.nn.functional as F
 from torchvision import models, transforms
 from typing import Tuple
 import time
@@ -17,6 +18,36 @@ from dataloader import load_train_data
 logging.basicConfig(filename="std.log", format="%(message)s", filemode="w")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        # ancestor constructor call
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=2)
+        self.conv2 = nn.Conv2d(
+            in_channels=16, out_channels=32, kernel_size=3, padding=2
+        )
+        self.conv3 = nn.Conv2d(
+            in_channels=32, out_channels=64, kernel_size=3, padding=2
+        )
+
+        self.bn1 = nn.BatchNorm2d(16)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.bn3 = nn.BatchNorm2d(64)
+
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.avg = nn.AvgPool2d(8)
+        self.fc = nn.Linear(64, 2)
+
+    def forward(self, x):
+        x = self.pool(F.leaky_relu(self.bn1(self.conv1(x))))
+        x = self.pool(F.leaky_relu(self.bn2(self.conv2(x))))
+        x = self.pool(F.leaky_relu(self.bn3(self.conv3(x))))
+        x = self.avg(x)
+        x = x.view(-1, 64)
+        x = self.fc(x)
+        return x
 
 
 def train_model(
@@ -67,16 +98,16 @@ def train_model(
                         # data augmentation HERE
                         if phase == "train":
                             data_aug = nn.Sequential(
-                                transforms.Resize(255),
-                                transforms.CenterCrop(224),
+                                # transforms.Resize(256),
+                                # transforms.CenterCrop(224),
                                 transforms.Normalize(
                                     [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
                                 ),
                             )
                         if phase == "val":
                             data_aug = nn.Sequential(
-                                transforms.Resize(255),
-                                transforms.CenterCrop(224),
+                                # transforms.Resize(256),
+                                # transforms.CenterCrop(224),
                                 transforms.Normalize(
                                     [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
                                 ),
@@ -128,14 +159,18 @@ def train_model(
 
 
 def fine_tune(
-    device: torch.device, dataloaders: dict[str, torch.utils.data.DataLoader]
+    device: torch.device, dataloaders: dict[str, torch.utils.data.DataLoader], how: str
 ):
     """ """
-    model_ft = models.resnet18(weights="IMAGENET1K_V1")
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 2)
+    if how == "baseline":
+        model_ft = SimpleCNN().to(device)
+        logger.info("Initialize baseline model")
+    else:
+        model_ft = models.resnet18(weights="IMAGENET1K_V1")
+        num_ftrs = model_ft.fc.in_features
+        model_ft.fc = nn.Linear(num_ftrs, 2)
 
-    model_ft = model_ft.to(device)
+        model_ft = model_ft.to(device)
 
     criterion = nn.CrossEntropyLoss()
 
@@ -158,7 +193,7 @@ def fine_tune(
     return model_ft, auc
 
 
-if __name__ == "__main__":
+def main():
     folds = 3
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -170,7 +205,11 @@ if __name__ == "__main__":
         i += 1
         logger.info("------------------")
         logger.info(f"Starting fold {i}")
-        model_ft, fold_auc = fine_tune(device, dataloaders)
+        model_ft, fold_auc = fine_tune(device, dataloaders, how="baseline")
         aucs.append(fold_auc)
 
     logger.info(f"Average val AUC: {sum(aucs)/folds:.4f}")
+
+
+if __name__ == "__main__":
+    main()
