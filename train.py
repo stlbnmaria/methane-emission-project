@@ -5,12 +5,13 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torcheval.metrics import BinaryAUROC, BinaryAccuracy, Mean
-import torch.nn.functional as F
 from torchvision import models, transforms
 from typing import Tuple
 import time
 import os
 from tempfile import TemporaryDirectory
+
+from models.baseline_cnn import SimpleCNN
 from dataloader import load_train_data
 
 
@@ -18,36 +19,6 @@ from dataloader import load_train_data
 logging.basicConfig(filename="std.log", format="%(message)s", filemode="w")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-
-class SimpleCNN(nn.Module):
-    def __init__(self):
-        # ancestor constructor call
-        super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=2)
-        self.conv2 = nn.Conv2d(
-            in_channels=16, out_channels=32, kernel_size=3, padding=2
-        )
-        self.conv3 = nn.Conv2d(
-            in_channels=32, out_channels=64, kernel_size=3, padding=2
-        )
-
-        self.bn1 = nn.BatchNorm2d(16)
-        self.bn2 = nn.BatchNorm2d(32)
-        self.bn3 = nn.BatchNorm2d(64)
-
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.avg = nn.AvgPool2d(8)
-        self.fc = nn.Linear(64, 2)
-
-    def forward(self, x):
-        x = self.pool(F.leaky_relu(self.bn1(self.conv1(x))))
-        x = self.pool(F.leaky_relu(self.bn2(self.conv2(x))))
-        x = self.pool(F.leaky_relu(self.bn3(self.conv3(x))))
-        x = self.avg(x)
-        x = x.view(-1, 64)
-        x = self.fc(x)
-        return x
 
 
 def train_model(
@@ -98,16 +69,16 @@ def train_model(
                         # data augmentation HERE
                         if phase == "train":
                             data_aug = nn.Sequential(
-                                # transforms.Resize(256),
-                                # transforms.CenterCrop(224),
+                                transforms.Resize(256),
+                                transforms.CenterCrop(224),
                                 transforms.Normalize(
                                     [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
                                 ),
                             )
                         if phase == "val":
                             data_aug = nn.Sequential(
-                                # transforms.Resize(256),
-                                # transforms.CenterCrop(224),
+                                transforms.Resize(256),
+                                transforms.CenterCrop(224),
                                 transforms.Normalize(
                                     [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
                                 ),
@@ -188,7 +159,7 @@ def fine_tune(
         optimizer_ft,
         exp_lr_scheduler,
         device,
-        num_epochs=2,
+        num_epochs=5,
     )
     return model_ft, auc
 
@@ -205,7 +176,7 @@ def main():
         i += 1
         logger.info("------------------")
         logger.info(f"Starting fold {i}")
-        model_ft, fold_auc = fine_tune(device, dataloaders, how="baseline")
+        model_ft, fold_auc = fine_tune(device, dataloaders, how="not-baseline")
         aucs.append(fold_auc)
 
     logger.info(f"Average val AUC: {sum(aucs)/folds:.4f}")
