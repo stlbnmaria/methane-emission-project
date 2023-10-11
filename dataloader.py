@@ -1,7 +1,9 @@
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from PIL import Image
 from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
@@ -150,3 +152,59 @@ def load_inference_data(
     filenames = [obj[0].split("/")[-1] for obj in base_dataset.imgs]
 
     return val_loader, filenames
+
+def load_tabular_train_data(
+        data_path: Path = Path("./data/train_data/metadata.csv"),
+        folds: int=5,
+        rands: int=42,
+        cv_shuffle: bool = True):
+    """_summary_
+
+    Args:
+        data_path (Path, optional): _description_. Defaults to Path("./data/train_data/metadata.csv").
+        folds (int, optional): _description_. Defaults to 5.
+    """
+
+    # specify the columns to include
+    columns_to_needed = ["date", "plume", "lat", "lon"]
+
+    # Load the data into a DataFrame
+    base_data = pd.read_csv(data_path, usecols=columns_to_needed)
+
+    # convert date column to datetime
+    base_data["date"] = pd.to_datetime(base_data['date'],
+                                       format="%Y%m%d",
+                                       errors='coerce')
+    
+    #data = base_data[["lat", "lon", "plume"]]
+
+
+    base_data["month"] = base_data["date"].dt.month
+    base_data["weekday"] = base_data["date"].dt.weekday
+
+    base_data = base_data.drop(labels= "date", axis=1)
+
+    X = base_data.drop(columns=["plume"])
+    y = base_data["plume"]
+
+    if folds > 1:
+        cv = KFold(n_splits=folds, random_state=rands, shuffle=cv_shuffle)
+
+        cv_splits = []
+
+        for train_idx, val_idx in cv.split(X,y):
+            train_data = base_data.iloc[train_idx]
+            val_data = base_data.iloc[val_idx]
+            cv_splits.append({"train": train_data, "val": val_data})
+            
+        return cv_splits
+
+    elif folds == 1:
+        train_data, val_data = train_test_split(base_data, test_size=0.2, random_state=rands)
+        
+        return train_data, val_data
+
+    elif folds == 0:
+        train_data = base_data
+        
+        return train_data
