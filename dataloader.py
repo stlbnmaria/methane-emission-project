@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
-from typing import List
+from typing import List, Tuple
 
 
 def get_cv_dataloaders(
@@ -59,7 +59,7 @@ def get_cv_dataloaders(
 
 
 def load_train_data(
-    data_path: Path, folds: int = 5
+    data_path: Path = Path("./data/train_data/images/"), folds: int = 5
 ) -> List[dict[str, torch.utils.data.DataLoader]]:
     """
     Load data for training either with cross validation or train-val-split.
@@ -103,3 +103,41 @@ def load_train_data(
         train_data = [{"train": train_loader, "val": valid_loader}]
 
     return train_data
+
+
+def load_inference_data(
+    data_path: Path = Path("./data/test_data/")
+) -> Tuple[torch.utils.data.DataLoader, List]:
+    """
+    Load data for inference incl. csv with filenames.
+
+    Args:
+    :param data_path: path to validation images
+
+    Returns:
+    :returns: tuple of validation data images in torch format and list of filenames
+    """
+
+    # define transforms
+    # in order to load uint16 some transformation with PIL is necessary
+    transform = transforms.Compose(
+        [
+            transforms.Lambda(
+                lambda image: torch.from_numpy(
+                    np.array(image).astype(np.float32) / 65535
+                ).repeat(3, 1, 1)
+            ),
+        ]
+    )
+    # create dataset from folder using torchvision
+    # attention: this will produce labels, just ignore them later
+    base_dataset = datasets.ImageFolder(
+        data_path, transform=transform, loader=lambda path: Image.open(path)
+    )
+    # create torch dataloader with no shuffling
+    val_loader = torch.utils.data.DataLoader(base_dataset, batch_size=1, shuffle=False)
+
+    # get filenames from image folder
+    filenames = [obj[0].split("/")[-1] for obj in base_dataset.imgs]
+
+    return val_loader, filenames
