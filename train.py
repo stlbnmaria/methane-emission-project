@@ -30,7 +30,23 @@ def train_model(
     num_epochs: int = 10,
     save: bool = False,
 ) -> float:
-    """ """
+    """
+    Train torch model on fold - incl. validation depending on data.
+
+    Args:
+    :param model: torch model - either pretrained or SimpleCNN as baseline
+    :param dataloaders: data as dict from dataloader.py
+    :param criterion: loss criterion
+    :param optimizer: optimizer for backpropagation
+    :param scheduler: learning rate scheduler
+    :param device: device to get GPU / CPU
+    :param num_epochs: number of epochs for training of the fold
+    :param save: if the model of the best epoch (according to val AUC) should be saved
+
+
+    Returns:
+    :returns: validation AUC of the fold
+    """
     since = time.time()
 
     # Create a temporary directory to save training checkpoints
@@ -151,7 +167,21 @@ def fine_tune(
     learning_rate: float,
     save: bool,
 ) -> float:
-    """ """
+    """
+    Sets up model for finetuning / training for the fold and by
+    using the train_model function completes the job.
+
+    Args:
+    :param device: device to get GPU / CPU
+    :param dataloaders: data as dict from dataloader.py
+    :param how: baseline model or pretrained
+    :param num_epochs: number of epochs for training of the fold
+    :param learning_rate: initial learning rate
+    :param save: if the model of the best epoch (according to val AUC) should be saved
+
+    Returns:
+    :returns: validation AUC of the fold
+    """
     # if baseline is demanded load simple CNN from models / baseline_cnn.py
     if how == "baseline":
         model_ft = SimpleCNN().to(device)
