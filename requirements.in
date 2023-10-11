@@ -1,2 +1,13 @@
 nbstripout==0.6.1
 ipykernel==6.25.2
+geodatasets==2023.3.0
+geopandas==0.14.0
+folium==0.14.0
+imageio==2.31.5
+matplotlib==3.8.0
+numpy==1.26.0
+pandas==2.1.1
+seaborn==0.13.0
+torch==2.1.0
+torchvision==0.16.0
+mapclassify==2.6.1
