@@ -67,7 +67,8 @@ def load_train_data(
     Args:
     :param data_path: path to training images that are in folders per category
     :param folds: number of folds to split the training data to; if set to 1, a random
-                  split to create one training dataset and one validation dataset will be performed
+                  split to create one training dataset and one validation dataset will be performed;
+                  if set to 0 the whole shuffled training data will be provided
 
     Returns:
     :returns: list of dicts of training and validation torch data for cross-validation / train-val-split
@@ -92,21 +93,29 @@ def load_train_data(
     if folds > 1:
         # get cv splits to perform cross validation
         train_data = get_cv_dataloaders(base_dataset, folds=folds)
-    else:
+    elif folds == 1:
         # do a random split for train-val-data
         train_set, val_set = torch.utils.data.random_split(
             base_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(10)
         )
-        train_loader = torch.utils.data.DataLoader(train_set, batch_size=32)
-        valid_loader = torch.utils.data.DataLoader(val_set, batch_size=32)
+        train_loader = torch.utils.data.DataLoader(
+            train_set, batch_size=32, shuffle=True
+        )
+        valid_loader = torch.utils.data.DataLoader(val_set, batch_size=32, shuffle=True)
 
         train_data = [{"train": train_loader, "val": valid_loader}]
+    elif folds == 0:
+        # load the whole train data as one for final model training
+        train_loader = torch.utils.data.DataLoader(
+            base_dataset, batch_size=32, shuffle=True
+        )
+        train_data = [{"train": train_loader}]
 
     return train_data
 
 
 def load_inference_data(
-    data_path: Path = Path("./data/test_data/")
+    data_path: Path = Path("./data/test_data/"),
 ) -> Tuple[torch.utils.data.DataLoader, List]:
     """
     Load data for inference incl. csv with filenames.
@@ -134,7 +143,7 @@ def load_inference_data(
     base_dataset = datasets.ImageFolder(
         data_path, transform=transform, loader=lambda path: Image.open(path)
     )
-    # create torch dataloader with no shuffling
+    # create torch dataloader with no shuffling
     val_loader = torch.utils.data.DataLoader(base_dataset, batch_size=1, shuffle=False)
 
     # get filenames from image folder
