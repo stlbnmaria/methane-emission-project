@@ -14,31 +14,78 @@ st.set_page_config(layout="wide")
 path = (
     os.getcwd() + "/" + ".." + "/" + "data" + "/" + "train_data" + "/" + "metadata.csv"
 )
-
 metadata = pd.read_csv(path)
-metadata["color"] = np.where(metadata["plume"] == "yes", "#00ff00", "#ff0000")
-metadata["date"] = metadata["date"].apply(lambda x: datetime.strptime(str(x), "%Y%m%d"))
-metadata["count"] = metadata.groupby(["lat", "lon"]).transform("size")
-metadata["last_date"] = metadata.groupby(["lat", "lon"])["date"].transform("max")
-metadata["plume_at_max_date"] = metadata[metadata["date"] == metadata["last_date"]][
-    "plume"
-]
-metadata = metadata[metadata["plume_at_max_date"].isna() == False]
+st.subheader("Relevant KPIs")
+st.markdown('----')
+col0, col1, col2, col3 = st.columns(4)
 
-plume_dic = {"yes": "Leakage", "no": "No leakage"}
-metadata = metadata.replace({"plume_at_max_date": plume_dic})
+st.markdown(
+    """
+<style>
+[data-testid="stMetricValue"] {
+    font-size: 100px;
+}
+""",
+    unsafe_allow_html=True,
+)
+
+
+# Number of continents for which we have images
+col0.metric("Number of continents", 4)
+#Number of pictures taken
+
+col1.metric(
+    "Number of pictures",
+    len(metadata),
+)
+#Number of Leakages
+
+col2.metric(
+    "Number of images",
+    len(metadata[metadata["plume"] == "yes"]),
+)
+
+# number of unhealthy+ (unhealthy, very unhealthy, hazardous)
+# days for the Year - comparison prev year
+col3.metric(
+    "Number of non-leakages",
+    len(metadata[metadata["plume"] == "no"]),
+)
+st.markdown('----')
+metadata = pd.read_csv(path)
+
+def webapp_data_processing(data):
+    data['date'] =  data['date'].apply(lambda x: datetime.strptime(str(x), '%Y%m%d'))
+    data['count'] = data.groupby(['lat', "lon"]).transform('size')
+    data['last_date'] = data.groupby(["lat", "lon"])['date'].transform('max')
+    data["plume"] = np.where(data["plume"] == "yes",1, 0)
+    data['plume_at_last_date'] = np.where(data['date'] == data['last_date'], np.where(data["plume"] == 1,1,0), 0)
+    data["plume_at_last_date"] = data.groupby(["lat", "lon"])['plume_at_last_date'].transform('max')
+    data['threshold_date'] = (data["date"] >= (data['last_date'] - pd.DateOffset(months=1)))
+    data["plume_last_month"] =  np.where(((data['threshold_date']) & (data["plume"] == 1) ), True, False)
+    data["last_month"] =  np.where((data['threshold_date']), True, False)
+    data = (data.groupby(['lat','lon','count',"last_date", "plume_at_last_date"])
+         .apply(lambda x: ((x['plume_last_month']).sum(), (x["last_month"]).sum(), (x["plume"]).sum()))
+         .reset_index(name='New_count'))
+    data['plume_count_lm'] = data["New_count"].apply(lambda x: x[0])
+    data["total_count_lm"] = data["New_count"].apply(lambda x: x[1])
+    data["plume_count"] = data["New_count"].apply(lambda x: x[2])
+    data = data.drop("New_count", axis=1)
+    return data
+
+metadata = webapp_data_processing(metadata)
 
 leak_bool = st.selectbox(
     "What do you wish to see?", np.array(["Leakages", "Non-leakages", "Both"])
 )
 
 if leak_bool == "Leakages":
-    selected_metadata = metadata[metadata["plume"] == "yes"]
+    selected_metadata = metadata[metadata["plume_at_last_date"] == 1]
     selected_metadata = selected_metadata.reset_index()
 
 
 if leak_bool == "Non-leakages":
-    selected_metadata = metadata[metadata["plume"] != "yes"]
+    selected_metadata = metadata[metadata["plume_at_last_date"] != 1]
     selected_metadata = selected_metadata.reset_index()
 
 
@@ -57,80 +104,64 @@ south_west_corner = min(coords)
 north_east_corner = max(coords)
 n.fit_bounds([south_west_corner, north_east_corner])
 
-left_col_color = "#3e95b5"
-right_col_color = "#f2f9ff"
+left_col_color = "#227250"
+right_col_color = "#A9A9A9"
+
 
 # add marker one by one on the map
-image_path = (
-    "C:/Users/joaoh/OneDrive/Imagens/20230101_methane_mixing_ratio_id_4928.jpeg"
-)
-for i in range(0, len(selected_metadata)):
-    html = (
-        f"""
-        <h1> Site report </h1>
+for i in range(0,len(selected_metadata)):
+    html=f"""
         <center> <table style="height: 126px; width: 305px;">
         <tbody>
         <tr>
-        <td style="width: 250px;background-color: """
-        + left_col_color
-        + """;"><span style="color: #ffffff;">Date of last picture </span></td>
-        <td style="width: 250px;background-color: """
-        + right_col_color
-        + """;">{}</td>""".format(selected_metadata.iloc[i]["last_date"])
-        + """
+        <td style="width: 250px;background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Date of last picture </span></td>
+        <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["last_date"]) + """
         </tr>
         <tr>
-        <td style="background-color: """
-        + left_col_color
-        + """;"><span style="color: #ffffff;">Last known leakage state </span></td>
-        <td style="width: 250px;background-color: """
-        + right_col_color
-        + """;">{}</td>""".format(selected_metadata.iloc[i]["plume_at_max_date"])
-        + """
+        <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Last known leakage state </span></td>
+        <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_at_last_date"]) + """
         </tr>
         <tr>
-        <td style="background-color: """
-        + left_col_color
-        + """;"><span style="color: #ffffff;">Total number of pictures </span></td>
-        <td style="width: 250px;background-color: """
-        + right_col_color
-        + """;">{}</td>""".format(selected_metadata.iloc[i]["count"])
-        + """
+        <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of pictures </span></td>
+        <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["count"]) + """
         </tr>
+        <tr>
+        <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of leakages </span></td>
+        <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count"]) + """
+        </tr>
+        <tr>
+        <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of pictures last month </span></td>
+        <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["total_count_lm"]) + """
+        </tr>
+        <tr>
+        <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of leakages last month </span></td>
+        <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count_lm"]) + """
+        </tr>
+
+
+
         </tbody>
         </table></center>
-        """
-    )
-    iframe = folium.IFrame(html=html, width=500, height=200)
-    popup = folium.Popup(iframe, max_width=500)
-    if selected_metadata.iloc[i]["plume"] == "yes":
+            """
+    iframe = folium.IFrame(html=html, width=305, height=150)
+    popup = folium.Popup(iframe, max_width=305)
+    if selected_metadata.iloc[i]["plume_at_last_date"] == 0:
         folium.Marker(
-            location=[
-                selected_metadata.iloc[i]["lat"],
-                selected_metadata.iloc[i]["lon"],
-            ],
+            location=[selected_metadata.iloc[i]['lat'], selected_metadata.iloc[i]['lon']],
             popup=popup,
-            icon=folium.DivIcon(
-                html=f"""
+            icon=folium.DivIcon(html=f"""
                 <div><svg>
                     <circle cx="5" cy="5" r="5" fill="#5fd32c" />
-                </svg></div>"""
-            ),
+                </svg></div>""")
         ).add_to(n)
     else:
         folium.Marker(
-            location=[
-                selected_metadata.iloc[i]["lat"],
-                selected_metadata.iloc[i]["lon"],
-            ],
+            location=[selected_metadata.iloc[i]['lat'], selected_metadata.iloc[i]['lon']],
             popup=popup,
-            icon=folium.DivIcon(
-                html=f"""
+            icon=folium.DivIcon(html=f"""
                 <div><svg>
                     <circle cx="5" cy="5" r="5" fill="#e93020" />
-                </svg></div>"""
-            ),
+                </svg></div>""")
         ).add_to(n)
 
-
-st_data = st_folium(n, width=1200)
+st_data = st_folium(n, width=1300, height = 500)
