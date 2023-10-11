@@ -28,7 +28,8 @@ def train_model(
     scheduler: lr_scheduler,
     device: torch.device,
     num_epochs: int = 10,
-):
+    save: bool = False,
+) -> float:
     """ """
     since = time.time()
 
@@ -133,9 +134,13 @@ def train_model(
         )
         logger.info(f"Best val AUC: {best_auc:4f}")
 
-        # load best model weights
-        model.load_state_dict(torch.load(best_model_params_path))
-    return model, best_auc
+        # save model to best.pt in models to be used for inference
+        if save:
+            # load best model weights
+            model.load_state_dict(torch.load(best_model_params_path))
+            torch.save(model.state_dict(), "./models/best.pt")
+
+    return best_auc
 
 
 def fine_tune(
@@ -144,7 +149,8 @@ def fine_tune(
     how: str,
     num_epochs: int,
     learning_rate: float,
-):
+    save: bool,
+) -> float:
     """ """
     # if baseline is demanded load simple CNN from models / baseline_cnn.py
     if how == "baseline":
@@ -175,8 +181,9 @@ def fine_tune(
         exp_lr_scheduler,
         device,
         num_epochs,
+        save,
     )
-    return model_ft, auc
+    return auc
 
 
 @click.command()
@@ -197,7 +204,7 @@ def main(folds, save, how, num_epochs, learning_rate):
         i += 1
         logger.info("------------------")
         logger.info(f"Starting fold {i}")
-        model_ft, fold_auc = fine_tune(device, dataloaders, how, num_epochs, learning_rate)
+        fold_auc = fine_tune(device, dataloaders, how, num_epochs, learning_rate, save)
         aucs.append(fold_auc)
 
     logger.info("------------------")
