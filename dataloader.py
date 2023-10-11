@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
-from typing import List
+from typing import List, Tuple
 
 
 def get_cv_dataloaders(
