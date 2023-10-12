@@ -194,9 +194,9 @@ def load_tabular_train_data(
     # droping date
     base_data = base_data.drop(labels= "date", axis=1)
 
-    # transforming plumne from yes/no to 1/0
+    # transforming plume from yes/no to 1/0
     yes_no_mapping = {'yes':1, 'no':0}
-    base_data["plumne"] = base_data["plumne"].map(yes_no_mapping)
+    base_data["plume"] = base_data["plume"].map(yes_no_mapping)
 
     # X = base_data.drop(columns=["plume"])
     # y = base_data["plume"]
@@ -221,5 +221,48 @@ def load_tabular_train_data(
         # return all the transformed data
         train_data = base_data
         cv_splits  = [{"train": train_data}]
+        
+    return cv_splits
+
+
+def load_tabular_inference_data(
+        data_path: Path = Path("./data/test_data/metadata.csv"),
+) ->    List[dict[str, pd.DataFrame]]:
+    """This function loads and transforms the tabular data for inference
+   
+    Args:
+        data_path (Path, optional): Path of the csv. Defaults to Path("./data/test_data/metadata.csv").
+
+    Returns:
+        List[dict[str, pd.DataFrame]]]: list of dicts of test tabular data
+    """
+
+    # specify the columns to include
+    columns_to_needed = ["date", "lat", "lon"]
+
+    # Load the data into a DataFrame
+    base_data = pd.read_csv(data_path, usecols=columns_to_needed)
+
+    # convert date column to datetime
+    base_data["date"] = pd.to_datetime(base_data['date'],
+                                       format="%Y%m%d",
+                                       errors='coerce')
+    
+    #data = base_data[["lat", "lon", "plume"]]
+
+    # adding month as column
+    base_data["month"] = base_data["date"].dt.month
+    # adding weekday as column
+    base_data["weekday"] = base_data["date"].dt.weekday
+    # droping date
+    base_data = base_data.drop(labels= "date", axis=1)
+
+    # transforming plume from yes/no to 1/0
+    yes_no_mapping = {'yes':1, 'no':0}
+    base_data["plume"] = base_data["plume"].map(yes_no_mapping)
+
+    # return all the transformed data
+    test_data = base_data
+    cv_splits  = [{"test": test_data}]
         
     return cv_splits
