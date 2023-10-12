@@ -1,6 +1,7 @@
 import requests
 from typing import Tuple, Any
 
+
 def send_email_via_sendgrid(subject: str, body: str, to_email: str) -> Tuple[int, str]:
     """
     Sends an email via the SendGrid API.
@@ -19,20 +20,21 @@ def send_email_via_sendgrid(subject: str, body: str, to_email: str) -> Tuple[int
 
     headers = {
         "Authorization": f"Bearer {SENDGRID_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     data = {
-        "personalizations": [{
-            "to": [{"email": to_email}],
-            "subject": subject
-        }],
+        "personalizations": [{"to": [{"email": to_email}], "subject": subject}],
         "from": {"email": "stevemoses13@gmail.com"},
-        "content": [{"type": "text/plain", "value": body}]
+        "content": [{"type": "text/plain", "value": body}],
     }
 
     response = requests.post(SENDGRID_API_URL, headers=headers, json=data)
     return response.status_code, response.text
 
 
-send_email_via_sendgrid('Methane Lekage Alert', 'There has been a leakage of methane', 'mosessteve04@gmail.com')
+send_email_via_sendgrid(
+    "Methane Lekage Alert",
+    "There has been a leakage of methane",
+    "mosessteve04@gmail.com",
+)
