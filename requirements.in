@@ -1,6 +1,7 @@
 # formatting
 black==23.9.1
 nbstripout==0.6.1
+click==8.1.7
 
 # jupyter
 ipykernel==6.25.2
