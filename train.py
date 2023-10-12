@@ -14,8 +14,6 @@ from models.baseline_cnn import SimpleCNN
 from dataloader import load_train_data
 from models.data_augmentation import get_augmented_data
 
-# TODO: make typing specific in the end - when final
-
 
 # create and configure logger
 logging.basicConfig(filename="models/modeling.log", format="%(message)s", filemode="w")
@@ -24,7 +22,7 @@ logger.setLevel(logging.INFO)
 
 
 def train_model(
-    model: models,
+    model: models.resnet18,
     dataloaders: dict[str, torch.utils.data.DataLoader],
     criterion: nn.CrossEntropyLoss,
     optimizer: optim.SGD,
