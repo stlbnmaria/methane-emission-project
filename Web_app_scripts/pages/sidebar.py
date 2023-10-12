@@ -1,18 +1,17 @@
 import streamlit as st
-import tensorflow as tf
 import pandas as pd
 import numpy as np
 import folium
 import os
-import matplotlib.pyplot as plt
-from PIL import Image
-import base64
-from IPython.display import IFrame
 from streamlit_folium import st_folium
-from datetime import datetime
+import zipfile
+import helper
+#sys.path.append("../..")
+#from inference import torch_inference
 
 st.set_page_config(layout="wide", page_title="Live Data")
 
+#Markdown code to add colors, spacing, margins etc
 st.markdown(
     """
     <style>
@@ -20,92 +19,27 @@ st.markdown(
         .st-emotion-cache-1aehpvj {
             font-size: 0px;
         }
-""", unsafe_allow_html=True)
-
-
-st.markdown(
-    """
-    <style>
-
         .main > div {
-            margin-top: -80px;
+            margin-top: -60px;
         }
-""", unsafe_allow_html=True)
-
-st.markdown(
-        """
-
-    <style>
-    .st-emotion-cache-nziaof{
+        .st-emotion-cache-nziaof{
         background-color: #227250;
-    }
-    """,
-        unsafe_allow_html=True,
-    )
-st.markdown(
-        """
-
-    <style>
-    .st-emotion-cache-pkbazv{
+        }
+        .st-emotion-cache-pkbazv{
         color: #ffffff;
-    }
-    """,
-        unsafe_allow_html=True,
-    )
-
-st.markdown(
-    """
-    <style>
-
+        }
         .st-emotion-cache-1uixxvy{
             margin-bottom: 40px;
         }
-""", unsafe_allow_html=True)
-st.markdown(
-    """
-    <style>
-
         .st-emotion-cache-vskyf7{
             margin-bottom: 40px;
         }
-""", unsafe_allow_html=True)
-st.markdown(
-    """
-    <style>
-
         .st-emotion-cache-1lx94gx{
             margin-bottom: 40px;
         }
 """, unsafe_allow_html=True)
-with st.sidebar:
-  i=0
-  while i <=13:
-    st.write("")
-    i +=1
-  st.image("logo.jpg", width=300)
 
-
-col0, col1, col2 = st.columns(3)
-with col0:
-    images = st.file_uploader(label="Upload images", accept_multiple_files=True)
-with col1:
-    metadata = st.file_uploader(label="Upload Metadata")
-
-def predict(x):
-    return 1
-
-results = []
-for image in images:
-    results +=[predict(image)]
-
-results_df = pd.DataFrame(results, columns=["Predictions"])
-results_csv = results_df.to_csv(index=False)
-
-
-with col2:
-    col2.write("")
-    col2.write("")
-    customized_button = st.markdown("""
+customized_button = st.markdown("""
     <style >
     .stDownloadButton, div.stButton {text-align:center}
     .stDownloadButton button, div.stButton > button:first-child {
@@ -121,19 +55,8 @@ with col2:
     }
         }
     </style>""", unsafe_allow_html=True)
-    st.download_button(
-   "Download predictions",
-   results_csv,)
 
-if metadata is not None:
-    metadata = pd.read_csv(metadata)
-    metadata = pd.merge(results_df, metadata, left_index=True, right_index=True)
-    metadata["plume"] = np.where(metadata["Predictions"] > 0, "yes", "no")
-
-
-    col0, col1, col2, col3 = st.columns(4)
-
-    st.markdown("""
+st.markdown("""
 <style>
 div[data-testid="metric-container"] {
    background-color: rgba(34, 114, 80, 1);
@@ -156,28 +79,72 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
 """
 , unsafe_allow_html=True)
 
+
+
+#Placing logo on sidebar
+with st.sidebar:
+  i=0
+  while i <=13:
+    st.write("")
+    i +=1
+  st.image("logo.jpg", width=300)
+
+#Creating three columns to upload images, metadata and to download predictions
+col0, col1, col2 = st.columns(3)
+with col0:
+    images = st.file_uploader(label="Upload images")
+with col1:
+    metadata = st.file_uploader(label="Upload Metadata")
+
+results = []
+if images is not None:
+    with zipfile.ZipFile(images, 'r') as zip_ref:
+        zip_ref.extractall("extracted_images")
+
+
+results_path = os.getcwd() + "\\pages\\submission_test_file.csv"
+results_df = pd.read_csv(results_path)
+results_csv = results_df.to_csv(index=False)
+
+
+with col2:
+    col2.write("")
+    col2.write("")
+    st.download_button(
+   "Download predictions",
+   results_csv,)
+
+if metadata is not None:
+    #Merging predictions with the metadata
+    results_df = results_df["label"]
+    metadata = pd.read_csv(metadata)
+    metadata = pd.merge(results_df, metadata, left_index=True, right_index=True)
+    metadata["plume"] = np.where(metadata["label"] > 0.5, "yes", "no")
+
+    #Creating 4 columns to display KPI's
+    col0, col1, col2, col3 = st.columns(4)
     # Number of continents for which we have images
     col0.metric("\# continents", 4)
-    #Number of pictures taken
 
+    #Number of pictures taken
     col1.metric(
         "\# pictures",
         len(metadata),
     )
-    #Number of Leakages
 
+    #Number of Leakages
     col2.metric(
         "\# leakages",
         len(metadata[metadata["plume"] == "yes"]),
     )
 
-    # number of unhealthy+ (unhealthy, very unhealthy, hazardous)
-    # days for the Year - comparison prev year
+    #Number of non leakages
     col3.metric(
         "\# non-leakages",
         len(metadata[metadata["plume"] == "no"]),
     )
 
+    #Markdown code to do color, spacing and formating changes on KPI containers
     st.markdown(
     """
     <style>
@@ -194,7 +161,6 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
                 margin-top: -10px;
             }
     """, unsafe_allow_html=True)
-
     st.markdown(
         """
         <style>
@@ -206,28 +172,6 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
 
     st.markdown('----')
 
-    def webapp_data_processing(data):
-        data['date'] =  data['date'].apply(lambda x: datetime.strptime(str(x), '%Y%m%d'))
-        data['count'] = data.groupby(['lat', "lon"]).transform('size')
-        data['last_date'] = data.groupby(["lat", "lon"])['date'].transform('max')
-        data["plume"] = np.where(data["plume"] == "yes",1, 0)
-        data['plume_at_last_date'] = np.where(data['date'] == data['last_date'], np.where(data["plume"] == 1,1,0), 0)
-        data["plume_at_last_date"] = data.groupby(["lat", "lon"])['plume_at_last_date'].transform('max')
-        data['threshold_date'] = (data["date"] >= (data['last_date'] - pd.DateOffset(months=1)))
-        data["plume_last_month"] =  np.where(((data['threshold_date']) & (data["plume"] == 1) ), True, False)
-        data["last_month"] =  np.where((data['threshold_date']), True, False)
-        data = (data.groupby(['lat','lon','count',"last_date", "plume_at_last_date"])
-            .apply(lambda x: ((x['plume_last_month']).sum(), (x["last_month"]).sum(), (x["plume"]).sum()))
-            .reset_index(name='New_count'))
-        data['plume_count_lm'] = data["New_count"].apply(lambda x: x[0])
-        data["total_count_lm"] = data["New_count"].apply(lambda x: x[1])
-        data["plume_count"] = data["New_count"].apply(lambda x: x[2])
-        data["Responsible"] = "joaohfpmelo@gmail.com"
-        data = data.drop("New_count", axis=1)
-        return data
-
-    metadata = webapp_data_processing(metadata)
-
     st.markdown(
     """
     <style>
@@ -237,6 +181,10 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
     </style>
     """,
     unsafe_allow_html=True,)
+
+
+    #Processing the data to display KPI's
+    metadata = helper.webapp_data_processing(metadata)
 
     leak_bool = st.selectbox(
         "What do you wish to see?", np.array(["Leakages", "Non-leakages", "Both"])
@@ -256,59 +204,19 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
         selected_metadata = metadata
         selected_metadata = selected_metadata.reset_index()
 
-    # Make an empty map
-    # Make an empty map
-
+    #creating map and bounding it
     n = folium.Map()
-    coords = []
     if len(selected_metadata) > 0:
-        for i in range(0, len(selected_metadata)):
-            coords += [(selected_metadata.iloc[i]["lat"], selected_metadata.iloc[i]["lon"])]
-        south_west_corner = min(coords)
-        north_east_corner = max(coords)
-        n.fit_bounds([south_west_corner, north_east_corner])
+        bounds = helper.mapsize(selected_metadata)
+        n.fit_bounds([bounds[0], bounds[1]])
 
+    #color of columns in popups
     left_col_color = "#227250"
     right_col_color = "#A9A9A9"
-
-
     # add marker one by one on the map
     if len(selected_metadata) > 0:
         for i in range(0,len(selected_metadata)):
-            html=f"""
-                <center> <table style="height: 126px; width: 305px;">
-                <tbody>
-                <tr>
-                <td style="width: 250px;background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Date of last picture </span></td>
-                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["last_date"]) + """
-                </tr>
-                <tr>
-                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Last known leakage state </span></td>
-                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_at_last_date"]) + """
-                </tr>
-                <tr>
-                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of pictures </span></td>
-                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["count"]) + """
-                </tr>
-                <tr>
-                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of leakages </span></td>
-                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count"]) + """
-                </tr>
-                <tr>
-                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of pictures last month </span></td>
-                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["total_count_lm"]) + """
-                </tr>
-                <tr>
-                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of leakages last month </span></td>
-                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count_lm"]) + """
-                </tr>
-                <tr>
-                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Responsible </span></td>
-                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["Responsible"]) + """
-                </tr>
-                </tbody>
-                </table></center>
-                    """
+            html=helper.table(left_col_color, right_col_color, selected_metadata, i)
             iframe = folium.IFrame(html=html, width=305, height=150)
             popup = folium.Popup(iframe, max_width=305)
             if selected_metadata.iloc[i]["plume_at_last_date"] == 0:
@@ -330,6 +238,8 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
                         </svg></div>""")
                 ).add_to(n)
 
+
+#rendering map
     st_data = st_folium(n, width=1300, height = 500)
 
 
