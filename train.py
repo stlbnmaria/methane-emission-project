@@ -104,7 +104,7 @@ def train_model(
                             optimizer.step()
 
                     # update epoch statistics - meaning add the preds / labels / loss
-                    running_loss.update(loss.detach(), weight=len(inputs))
+                    running_loss.update(loss.detach(), weight=len(inputs_comb))
                     auc.update(probs, labels)
                     acc.update(probs, labels)
 

@@ -60,3 +60,10 @@ python inference.py
 ## Run the App
 
 ## Results
+Explain CV -split used for results 
+batch size, folds, epochs
+
+Model | Avg. Val AUC
+--- | ---
+Baseline CNN | TBD
+ResNet18 | TBD
