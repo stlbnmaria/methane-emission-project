@@ -5,10 +5,11 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torcheval.metrics import BinaryAUROC, BinaryAccuracy, Mean
-from torchvision import models, transforms
+from torchvision import models
 import time
 import os
 from tempfile import TemporaryDirectory
+from typing import Union
 
 from models.baseline_cnn import SimpleCNN
 from dataloader import load_train_data
@@ -22,7 +23,7 @@ logger.setLevel(logging.INFO)
 
 
 def train_model(
-    model: models.resnet18,
+    model: Union[models.resnet18, SimpleCNN],
     dataloaders: dict[str, torch.utils.data.DataLoader],
     criterion: nn.CrossEntropyLoss,
     optimizer: optim.SGD,
