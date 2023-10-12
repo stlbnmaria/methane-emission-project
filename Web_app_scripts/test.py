@@ -15,6 +15,27 @@ path = (
     os.getcwd() + "/" + ".." + "/" + "data" + "/" + "train_data" + "/" + "metadata.csv"
 )
 
+st.markdown(
+        """
+
+    <style>
+    .st-emotion-cache-nziaof{
+        background-color: #227250;
+    }
+    """,
+        unsafe_allow_html=True,
+    )
+
+st.markdown(
+        """
+
+    <style>
+    .st-emotion-cache-pkbazv{
+        color: #ffffff;
+    }
+    """,
+        unsafe_allow_html=True,
+    )
 
 with st.sidebar:
   i=0
@@ -24,8 +45,6 @@ with st.sidebar:
   st.image("logo-color.png", width=300)
 
 metadata = pd.read_csv(path)
-st.subheader("Relevant KPIs")
-st.markdown('----')
 col0, col1, col2, col3 = st.columns(4)
 
 st.markdown(
@@ -40,24 +59,24 @@ st.markdown(
 
 
 # Number of continents for which we have images
-col0.metric("Number of continents", 4)
+col0.metric("\# continents", 4)
 #Number of pictures taken
 
 col1.metric(
-    "Number of pictures",
+    "\# pictures",
     len(metadata),
 )
 #Number of Leakages
 
 col2.metric(
-    "Number of images",
+    "\# Leakages",
     len(metadata[metadata["plume"] == "yes"]),
 )
 
 # number of unhealthy+ (unhealthy, very unhealthy, hazardous)
 # days for the Year - comparison prev year
 col3.metric(
-    "Number of non-leakages",
+    "\# non-leakages",
     len(metadata[metadata["plume"] == "no"]),
 )
 st.markdown('----')

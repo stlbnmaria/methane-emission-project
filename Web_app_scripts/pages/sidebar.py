@@ -13,12 +13,33 @@ from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Live Data")
 
+st.markdown(
+        """
+
+    <style>
+    .st-emotion-cache-nziaof{
+        background-color: #227250;
+    }
+    """,
+        unsafe_allow_html=True,
+    )
+st.markdown(
+        """
+
+    <style>
+    .st-emotion-cache-pkbazv{
+        color: #ffffff;
+    }
+    """,
+        unsafe_allow_html=True,
+    )
+
 with st.sidebar:
   i=0
   while i <=13:
     st.write("")
     i +=1
-  st.image("logo-color.png", width=300)
+  st.image("logo.jpg", width=300)
 
 
 col0, col1, col2 = st.columns(3)
@@ -66,8 +87,7 @@ if metadata is not None:
     metadata = pd.merge(results_df, metadata, left_index=True, right_index=True)
     metadata["plume"] = np.where(metadata["Predictions"] > 0, "yes", "no")
 
-    st.subheader("Relevant KPIs")
-    st.markdown('----')
+
     col0, col1, col2, col3 = st.columns(4)
 
     st.markdown(
@@ -82,24 +102,24 @@ if metadata is not None:
 
 
     # Number of continents for which we have images
-    col0.metric("Number of continents", 4)
+    col0.metric("\# continents", 4)
     #Number of pictures taken
 
     col1.metric(
-        "Number of pictures",
+        "\# pictures",
         len(metadata),
     )
     #Number of Leakages
 
     col2.metric(
-        "Number of images",
+        "\# leakages",
         len(metadata[metadata["plume"] == "yes"]),
     )
 
     # number of unhealthy+ (unhealthy, very unhealthy, hazardous)
     # days for the Year - comparison prev year
     col3.metric(
-        "Number of non-leakages",
+        "\# non-leakages",
         len(metadata[metadata["plume"] == "no"]),
     )
     st.markdown('----')
