@@ -2,12 +2,11 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from PIL import Image
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold, train_test_split
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 
 def get_cv_dataloaders(
@@ -157,7 +156,10 @@ def load_tabular_train_data(
         data_path: Path = Path("./data/train_data/metadata.csv"),
         folds: int=5,
         rands: int=42,
-        cv_shuffle: bool = True):
+        cv_shuffle: bool = True
+) -> Union[pd.DataFrame,
+           Tuple[pd.DataFrame, pd.DataFrame],
+           List[dict[str, pd.DataFrame]]]:
     """_summary_
 
     Args:
@@ -178,21 +180,26 @@ def load_tabular_train_data(
     
     #data = base_data[["lat", "lon", "plume"]]
 
-
+    # adding month as column
     base_data["month"] = base_data["date"].dt.month
+    # adding weekday as column
     base_data["weekday"] = base_data["date"].dt.weekday
-
+    # droping date
     base_data = base_data.drop(labels= "date", axis=1)
 
-    X = base_data.drop(columns=["plume"])
-    y = base_data["plume"]
+    # transforming plumne from yes/no to 1/0
+    yes_no_mapping = {'yes':1, 'no':0}
+    base_data["plumne"] = base_data["plumne"].map(yes_no_mapping)
+
+    # X = base_data.drop(columns=["plume"])
+    # y = base_data["plume"]
 
     if folds > 1:
         cv = KFold(n_splits=folds, random_state=rands, shuffle=cv_shuffle)
 
         cv_splits = []
 
-        for train_idx, val_idx in cv.split(X,y):
+        for train_idx, val_idx in cv.split(base_data.index):
             train_data = base_data.iloc[train_idx]
             val_data = base_data.iloc[val_idx]
             cv_splits.append({"train": train_data, "val": val_data})
