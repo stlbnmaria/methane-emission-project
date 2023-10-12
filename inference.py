@@ -3,13 +3,15 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
+from pathlib import Path
 
 from dataloader import load_inference_data
 
 
 @click.command()
 @click.option("--save", "-s", default=True, type=bool)
-def torch_inference(save: bool) -> pd.DataFrame:
+@click.option("--path_", "-p", default=Path("./data/test_data/"), type=click.Path())
+def torch_inference(save: bool, path_: Path) -> pd.DataFrame:
     """
     This function predicts on the test data and saves a csv with path and probabilities.
 
@@ -20,7 +22,7 @@ def torch_inference(save: bool) -> pd.DataFrame:
     :returns: pandas dataframe with paths to img and probability predictions
     """
     # load inference data
-    val_data, filenames = load_inference_data()
+    val_data, filenames = load_inference_data(data_path=path_)
     preds = []
 
     # set up model
