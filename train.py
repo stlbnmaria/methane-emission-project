@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory
 
 from models.baseline_cnn import SimpleCNN
 from dataloader import load_train_data
+from models.data_augmentation import get_augmented_data
 
 # TODO: make typing specific in the end - when final
 
@@ -29,6 +30,7 @@ def train_model(
     optimizer: optim.SGD,
     scheduler: lr_scheduler.StepLR,
     device: torch.device,
+    how: str,
     num_epochs: int = 10,
     save: bool = False,
 ) -> float:
@@ -42,6 +44,7 @@ def train_model(
     :param optimizer: optimizer for backpropagation
     :param scheduler: learning rate scheduler
     :param device: device to get GPU / CPU
+    :param how: baseline model or pretrained
     :param num_epochs: number of epochs for training of the fold
     :param save: if the model of the best epoch (according to val AUC) should be saved
 
@@ -86,43 +89,7 @@ def train_model(
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
                         # data augmentation
-                        # TODO: complete and maybe carve out as function
-                        if phase == "train":
-                            data_aug = nn.Sequential(
-                                transforms.Resize(75),
-                                transforms.RandomCrop(64),
-                                transforms.RandomRotation(degrees=30),
-                                transforms.RandomHorizontalFlip(p=0.5),
-                                transforms.RandomVerticalFlip(p=0.5),
-                                transforms.RandomAdjustSharpness(2.0),
-                                transforms.RandomAutocontrast(p=0.5),
-                                transforms.Normalize(
-                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
-                                ),
-                            )    
-
-                            data_aug_input = nn.Sequential(
-                                # transforms.Resize(256),
-                                # transforms.RandomCrop(224),
-                                transforms.Normalize(
-                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
-                                ),
-                            )
-
-                        if phase == "val":
-                            data_aug = nn.Sequential(
-                                #transforms.Resize(256),
-                                #transforms.RandomCrop(224),
-                                transforms.Normalize(
-                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
-                                ),
-                            )
-
-                        inputs_aug = data_aug(inputs) # augmented data
-                        input_resize = data_aug_input(inputs) # original resized data depending on model
-                        inputs_comb = torch.cat((input_resize, inputs_aug), dim=0)  # Concatenate original and augmented data
-                        labels = torch.cat((labels, labels), dim=0)
-                        #######################
+                        inputs_comb, labels = get_augmented_data(phase, inputs, labels, how)
 
                         # fine tune model - forward pass
                         outputs = model(inputs_comb)
@@ -229,6 +196,7 @@ def fine_tune(
         optimizer_ft,
         exp_lr_scheduler,
         device,
+        how,
         num_epochs,
         save,
     )
