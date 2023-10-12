@@ -225,6 +225,19 @@ def fine_tune(
 @click.option("--num_epochs", "-e", default=5, type=int)
 @click.option("--learning_rate", "-l", default=0.001, type=float)
 def main(folds, save, how, num_epochs, learning_rate):
+    """
+    This function performs the training.
+
+    Args:
+    :param folds: number of folds for cv (2+), train-val (1) or just train (0) data
+    :param how: baseline model or pretrained
+    :param save: if the model of the best epoch (according to val AUC) should be saved
+    :param num_epochs: number of epochs for training of the fold
+    :param learning_rate: initial learning rate
+
+    Returns:
+    :returns: None
+    """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     train_data = load_train_data(folds=folds)
 
