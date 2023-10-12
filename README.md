@@ -2,8 +2,6 @@
 
 Authors: Alvaro Calafell, João Melo, Steve Moses, Harshit Shangari, Thomas Schneider & Maria Stoelben
 
-## Description
-
 ## Data
 The data consists of satellite images of different locations. There are 428 annotated images and 108 test images. The data is labeled with whether a location contains a methane plume or not. The image size is 64 x 64 pixels with one channel, i.e. grayscale images. Additionally, metadata of the images was provided, incl. longitude, latitude, date and coordinates of the plume. Below example images from the data as well as the geographical locations are displayed.
 
@@ -13,7 +11,7 @@ The data consists of satellite images of different locations. There are 428 anno
 </p>
 
 ## Data Augmentation
-We use image augmentation techniques to augment the training data since the size of our dataset is small and we run the risk of overfitting. We use different geometric transformations such as random cropping, rotations, horizontal and vertical flips as well as adjust the sharpness and contrast of the original images to create new augmented images for the training data. Finally, we normalize all our images. For the validation data, the images are only resized and cropped depending on the input requirement of the model we use and normalized in the end.
+We use different geometric transformations such as random cropping, rotations, horizontal and vertical flips as well as adjust the sharpness and contrast of the original images to create new augmented images for the training data. Finally, we normalize all our images. For the validation data, the images are only resized and cropped depending on the input requirement of the model we use and normalized in the end.
 
 ## Setup
 Create a virtual environment:
@@ -58,16 +56,13 @@ python inference.py
 ```
 
 ## Run the App
+```bash
+cd Web_app_scripts
+streamlit run first.py
+```
 
 ## Results
-Explain CV -split used for results 
-batch size, folds, epochs
-
-5 - fold cross validation
-final model trained on all data
-batch size: 32 after augmentation
-10 epochs
-save model with highest Val AUC
+The image classification was trained on a 5-fold cross validation split with batch size 32 (after data augmentation). Each fold runs for 10 epochs with an SGD optimizer with momentum and decay.
 
 Model | Avg. Val AUC | Weigths
 --- | --- | ---
@@ -77,3 +72,5 @@ DenseNet-121 | 0.95 | IMAGENET1K_V1
 Swin-T | 0.95 | IMAGENET1K_V1
 VGG19-BN | 0.94 | IMAGENET1K_V1
 ResNet50 | 0.91 | IMAGENET1K_V2
+
+For the final submissions the best model (ResNet18) was fine tuned on the whole dataset. The right number of epochs was inferred by the validation results from the previous step.
