@@ -1,3 +1,4 @@
+import click
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -6,12 +7,17 @@ from torchvision import models, transforms
 from dataloader import load_inference_data
 
 
-def main() -> None:
+@click.command()
+@click.option("--save", "-s", default=True, type=bool)
+def torch_inference(save: bool) -> pd.DataFrame:
     """
     This function predicts on the test data and saves a csv with path and probabilities.
 
-    Args: None
-    Returns: None
+    Args: 
+    :param save: if the predictions should be saved to csv
+
+    Returns: 
+    :returns: pandas dataframe with paths to img and probability predictions
     """
     # load inference data
     val_data, filenames = load_inference_data()
@@ -29,7 +35,7 @@ def main() -> None:
         # perform necessary transformations for inference data
         data_aug = nn.Sequential(
             transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.RandomCrop(224),
             transforms.Normalize([0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]),
         )
         inputs_aug = data_aug(inputs)
@@ -42,8 +48,11 @@ def main() -> None:
 
     # save predictions as csv for hand in
     out_df = pd.DataFrame({"path": filenames, "label": preds})
-    out_df.to_csv("predictions/submission_test_file.csv", index=False)
+    if save:
+        out_df.to_csv("predictions/submission_test_file.csv", index=False)
+    
+    return out_df
 
 
 if __name__ == "__main__":
-    main()
+    torch_inference()
