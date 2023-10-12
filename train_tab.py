@@ -8,7 +8,6 @@ auc_scores = []
 acc_scores = []
 
 for fold in cv_splits:
-
     train_data = fold["train"]
     val_data = fold["val"]
 
@@ -21,13 +20,13 @@ for fold in cv_splits:
     model.fit(X_train, y_train)
 
     model.save_model("./models/best_xgb.json")
-    
+
     y_pred = model.predict_proba(X_val)
-    #print(y_pred)
+    # print(y_pred)
     y_pred = y_pred[:, 1]
 
     auc = roc_auc_score(y_val, y_pred)
-    acc = accuracy_score(y_val, y_pred>=0.5)
+    acc = accuracy_score(y_val, y_pred >= 0.5)
 
     auc_scores.append(auc)
     acc_scores.append(acc)

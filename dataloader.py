@@ -177,15 +177,24 @@ def load_tabular_train_data(
     """
 
     # specify the columns to include
-    columns_to_needed = ["date", "plume", "lat", "lon",
-                         "id_coord","coord_x","coord_y"]
+    columns_to_needed = [
+        "date",
+        "plume",
+        "lat",
+        "lon",
+        "id_coord",
+        "coord_x",
+        "coord_y",
+    ]
 
     # Load the data into a DataFrame
     base_data = pd.read_csv(data_path, usecols=columns_to_needed)
 
     # drop duplicate rows based on id_coords
-    base_data.drop_duplicates(subset=["id_coord","date","coord_x","coord_y"], inplace=True)
-    base_data.drop(["id_coord","coord_x","coord_y"], axis=1, inplace=True)
+    base_data.drop_duplicates(
+        subset=["id_coord", "date", "coord_x", "coord_y"], inplace=True
+    )
+    base_data.drop(["id_coord", "coord_x", "coord_y"], axis=1, inplace=True)
 
     # convert date column to datetime
     base_data["date"] = pd.to_datetime(
@@ -242,15 +251,19 @@ def load_tabular_inference_data(
     """
 
     # specify the columns to include
-    columns_to_needed = ["date", "lat", "lon",
-                         "id_coord","coord_x","coord_y"]
+    columns_to_needed = ["date", "lat", "lon", "id_coord"]
 
     # Load the data into a DataFrame
     base_data = pd.read_csv(data_path / "metadata.csv", usecols=columns_to_needed)
 
     # drop duplicate rows based on id_coords
-    base_data.drop_duplicates(subset=["id_coord","date","coord_x","coord_y"], inplace=True)
-    base_data.drop(["id_coord","coord_x","coord_y"], axis=1, inplace=True)
+    filenames = [
+        file for file in os.listdir(data_path / "images") if file != ".DS_Store"
+    ]
+    filenames = sorted(filenames)
+    base_data = base_data.sort_values(by=["date", "id_coord"])
+    base_data.drop_duplicates(subset=["id_coord", "date"], inplace=True)
+    base_data.drop(["id_coord"], axis=1, inplace=True)
 
     # convert date column to datetime
     base_data["date"] = pd.to_datetime(
@@ -264,5 +277,5 @@ def load_tabular_inference_data(
     # droping date
     base_data = base_data.drop(labels="date", axis=1)
 
-    infer_data = [{"test": base_data, "filenames": os.listdir(data_path / "images")}]
+    infer_data = [{"test": base_data, "filenames": filenames}]
     return infer_data

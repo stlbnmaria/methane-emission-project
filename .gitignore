@@ -1,7 +1,7 @@
 # CUSTOM
 data/
 .DS_Store
-predictions/submission_test_file.csv
+predictions/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
