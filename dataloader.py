@@ -160,11 +160,19 @@ def load_tabular_train_data(
 ) -> Union[pd.DataFrame,
            Tuple[pd.DataFrame, pd.DataFrame],
            List[dict[str, pd.DataFrame]]]:
-    """_summary_
+    """This function loads and transforms the tabular data 
+    in such a way that it can easily be used for a ML pipeline
+    Pay attention depenidng on number of folds the output data type will change.
 
     Args:
-        data_path (Path, optional): _description_. Defaults to Path("./data/train_data/metadata.csv").
-        folds (int, optional): _description_. Defaults to 5.
+        data_path (Path, optional): Path of the csv. Defaults to Path("./data/train_data/metadata.csv").
+        folds (int, optional): Number of folds wanted. Defaults to 5.
+        rands (int, optional): Number used for random state if the data
+        should be shuffeled before the cv-split. Defaults to 42.
+        cv_shuffle (bool, optional): Whether to use cv_shuffle. Defaults to True.
+
+    Returns:
+        Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame], List[dict[str, pd.DataFrame]]]: _description_
     """
 
     # specify the columns to include
@@ -195,6 +203,7 @@ def load_tabular_train_data(
     # y = base_data["plume"]
 
     if folds > 1:
+        # use sklearn kfold to split into random training/validation indices
         cv = KFold(n_splits=folds, random_state=rands, shuffle=cv_shuffle)
 
         cv_splits = []
@@ -207,11 +216,13 @@ def load_tabular_train_data(
         return cv_splits
 
     elif folds == 1:
+        # use a singular train_testsplit
         train_data, val_data = train_test_split(base_data, test_size=0.2, random_state=rands)
         
         return train_data, val_data
 
     elif folds == 0:
+        # return all the transformed data
         train_data = base_data
         
         return train_data
