@@ -25,9 +25,9 @@ logger.setLevel(logging.INFO)
 def train_model(
     model: models,
     dataloaders: dict[str, torch.utils.data.DataLoader],
-    criterion: nn,
-    optimizer: optim,
-    scheduler: lr_scheduler,
+    criterion: nn.CrossEntropyLoss,
+    optimizer: optim.SGD,
+    scheduler: lr_scheduler.StepLR,
     device: torch.device,
     num_epochs: int = 10,
     save: bool = False,
