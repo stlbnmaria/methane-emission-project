@@ -222,6 +222,7 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
         data['plume_count_lm'] = data["New_count"].apply(lambda x: x[0])
         data["total_count_lm"] = data["New_count"].apply(lambda x: x[1])
         data["plume_count"] = data["New_count"].apply(lambda x: x[2])
+        data["Responsible"] = "joaohfpmelo@gmail.com"
         data = data.drop("New_count", axis=1)
         return data
 
@@ -260,71 +261,74 @@ div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
 
     n = folium.Map()
     coords = []
-    for i in range(0, len(selected_metadata)):
-        coords += [(selected_metadata.iloc[i]["lat"], selected_metadata.iloc[i]["lon"])]
-    south_west_corner = min(coords)
-    north_east_corner = max(coords)
-    n.fit_bounds([south_west_corner, north_east_corner])
+    if len(selected_metadata) > 0:
+        for i in range(0, len(selected_metadata)):
+            coords += [(selected_metadata.iloc[i]["lat"], selected_metadata.iloc[i]["lon"])]
+        south_west_corner = min(coords)
+        north_east_corner = max(coords)
+        n.fit_bounds([south_west_corner, north_east_corner])
 
     left_col_color = "#227250"
     right_col_color = "#A9A9A9"
 
 
     # add marker one by one on the map
-    for i in range(0,len(selected_metadata)):
-        html=f"""
-            <center> <table style="height: 126px; width: 305px;">
-            <tbody>
-            <tr>
-            <td style="width: 250px;background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Date of last picture </span></td>
-            <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["last_date"]) + """
-            </tr>
-            <tr>
-            <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Last known leakage state </span></td>
-            <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_at_last_date"]) + """
-            </tr>
-            <tr>
-            <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of pictures </span></td>
-            <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["count"]) + """
-            </tr>
-            <tr>
-            <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of leakages </span></td>
-            <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count"]) + """
-            </tr>
-            <tr>
-            <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of pictures last month </span></td>
-            <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["total_count_lm"]) + """
-            </tr>
-            <tr>
-            <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of leakages last month </span></td>
-            <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count_lm"]) + """
-            </tr>
-
-
-
-            </tbody>
-            </table></center>
-                """
-        iframe = folium.IFrame(html=html, width=305, height=150)
-        popup = folium.Popup(iframe, max_width=305)
-        if selected_metadata.iloc[i]["plume_at_last_date"] == 0:
-            folium.Marker(
-                location=[selected_metadata.iloc[i]['lat'], selected_metadata.iloc[i]['lon']],
-                popup=popup,
-                icon=folium.DivIcon(html=f"""
-                    <div><svg>
-                        <circle cx="5" cy="5" r="5" fill="#5fd32c" />
-                    </svg></div>""")
-            ).add_to(n)
-        else:
-            folium.Marker(
-                location=[selected_metadata.iloc[i]['lat'], selected_metadata.iloc[i]['lon']],
-                popup=popup,
-                icon=folium.DivIcon(html=f"""
-                    <div><svg>
-                        <circle cx="5" cy="5" r="5" fill="#e93020" />
-                    </svg></div>""")
-            ).add_to(n)
+    if len(selected_metadata) > 0:
+        for i in range(0,len(selected_metadata)):
+            html=f"""
+                <center> <table style="height: 126px; width: 305px;">
+                <tbody>
+                <tr>
+                <td style="width: 250px;background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Date of last picture </span></td>
+                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["last_date"]) + """
+                </tr>
+                <tr>
+                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Last known leakage state </span></td>
+                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_at_last_date"]) + """
+                </tr>
+                <tr>
+                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of pictures </span></td>
+                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["count"]) + """
+                </tr>
+                <tr>
+                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Total number of leakages </span></td>
+                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count"]) + """
+                </tr>
+                <tr>
+                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of pictures last month </span></td>
+                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["total_count_lm"]) + """
+                </tr>
+                <tr>
+                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of leakages last month </span></td>
+                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count_lm"]) + """
+                </tr>
+                <tr>
+                <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Responsible </span></td>
+                <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["Responsible"]) + """
+                </tr>
+                </tbody>
+                </table></center>
+                    """
+            iframe = folium.IFrame(html=html, width=305, height=150)
+            popup = folium.Popup(iframe, max_width=305)
+            if selected_metadata.iloc[i]["plume_at_last_date"] == 0:
+                folium.Marker(
+                    location=[selected_metadata.iloc[i]['lat'], selected_metadata.iloc[i]['lon']],
+                    popup=popup,
+                    icon=folium.DivIcon(html=f"""
+                        <div><svg>
+                            <circle cx="5" cy="5" r="5" fill="#5fd32c" />
+                        </svg></div>""")
+                ).add_to(n)
+            else:
+                folium.Marker(
+                    location=[selected_metadata.iloc[i]['lat'], selected_metadata.iloc[i]['lon']],
+                    popup=popup,
+                    icon=folium.DivIcon(html=f"""
+                        <div><svg>
+                            <circle cx="5" cy="5" r="5" fill="#e93020" />
+                        </svg></div>""")
+                ).add_to(n)
 
     st_data = st_folium(n, width=1300, height = 500)
 

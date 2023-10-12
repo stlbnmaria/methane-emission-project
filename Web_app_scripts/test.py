@@ -147,6 +147,7 @@ def webapp_data_processing(data):
     data['plume_count_lm'] = data["New_count"].apply(lambda x: x[0])
     data["total_count_lm"] = data["New_count"].apply(lambda x: x[1])
     data["plume_count"] = data["New_count"].apply(lambda x: x[2])
+    data["Responsible"] = "joaohfpmelo@gmail.com"
     data = data.drop("New_count", axis=1)
     return data
 
@@ -225,9 +226,10 @@ for i in range(0,len(selected_metadata)):
         <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Number of leakages last month </span></td>
         <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i]["plume_count_lm"]) + """
         </tr>
-
-
-
+        <tr>
+        <td style="background-color: """+ left_col_color +""";"><span style="color: #ffffff;">Responsible </span></td>
+        <td style="width: 250px;background-color: """+ right_col_color +""";">{}</td>""".format(selected_metadata.iloc[i][""]) + """
+        </tr>
         </tbody>
         </table></center>
             """
