@@ -12,6 +12,9 @@ The data consists of satellite images of different locations. There are 428 anno
   <img src='EDA/map.png' width="53%" /> 
 </p>
 
+## Data Augmentation
+We use image augmentation techniques to augment the training data since the size of our dataset is small and we run the risk of overfitting. We use different geometric transformations such as random cropping, rotations, horizontal and vertical flips as well as adjust the sharpness and contrast of the original images to create new augmented images for the training data. Finally, we normalize all our images. For the validation data, the images are only resized and cropped depending on the input requirement of the model we use and normalized in the end.
+
 ## Setup
 Create a virtual environment:
 
@@ -54,4 +57,13 @@ python train.py
 python inference.py
 ```
 
+## Run the App
+
 ## Results
+Explain CV -split used for results 
+batch size, folds, epochs
+
+Model | Avg. Val AUC
+--- | ---
+Baseline CNN | TBD
+ResNet18 | TBD

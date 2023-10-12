@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory
 
 from models.baseline_cnn import SimpleCNN
 from dataloader import load_train_data
+from models.data_augmentation import get_augmented_data
 
 # TODO: make typing specific in the end - when final
 
@@ -29,6 +30,7 @@ def train_model(
     optimizer: optim.SGD,
     scheduler: lr_scheduler.StepLR,
     device: torch.device,
+    how: str,
     num_epochs: int = 10,
     save: bool = False,
 ) -> float:
@@ -42,6 +44,7 @@ def train_model(
     :param optimizer: optimizer for backpropagation
     :param scheduler: learning rate scheduler
     :param device: device to get GPU / CPU
+    :param how: baseline model or pretrained
     :param num_epochs: number of epochs for training of the fold
     :param save: if the model of the best epoch (according to val AUC) should be saved
 
@@ -85,30 +88,11 @@ def train_model(
 
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
-                        # data augmentation HERE
-                        # TODO: complete and maybe carve out as function
-                        if phase == "train":
-                            data_aug = nn.Sequential(
-                                transforms.Resize(256),
-                                transforms.CenterCrop(224),
-                                transforms.Normalize(
-                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
-                                ),
-                            )
-                        if phase == "val":
-                            data_aug = nn.Sequential(
-                                transforms.Resize(256),
-                                transforms.CenterCrop(224),
-                                transforms.Normalize(
-                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
-                                ),
-                            )
-
-                        inputs_aug = data_aug(inputs)
-                        #######################
+                        # data augmentation
+                        inputs_comb, labels = get_augmented_data(phase, inputs, labels, how)
 
                         # fine tune model - forward pass
-                        outputs = model(inputs_aug)
+                        outputs = model(inputs_comb)
                         # get probabilities with Softmax activation
                         probs = nn.Softmax(dim=1)(outputs)[:, 1]
                         # calculate loss
@@ -120,7 +104,7 @@ def train_model(
                             optimizer.step()
 
                     # update epoch statistics - meaning add the preds / labels / loss
-                    running_loss.update(loss.detach(), weight=len(inputs))
+                    running_loss.update(loss.detach(), weight=len(inputs_comb))
                     auc.update(probs, labels)
                     acc.update(probs, labels)
 
@@ -212,6 +196,7 @@ def fine_tune(
         optimizer_ft,
         exp_lr_scheduler,
         device,
+        how,
         num_epochs,
         save,
     )
