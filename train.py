@@ -89,7 +89,9 @@ def train_model(
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
                         # data augmentation
-                        inputs_comb, labels = get_augmented_data(phase, inputs, labels, how)
+                        inputs_comb, labels = get_augmented_data(
+                            phase, inputs, labels, how
+                        )
 
                         # fine tune model - forward pass
                         outputs = model(inputs_comb)
