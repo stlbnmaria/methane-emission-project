@@ -61,7 +61,7 @@ def train_model(
             logger.info("-" * 10)
 
             # Each epoch has a training and validation phase
-            for phase in ["train", "val"]:
+            for phase in list(dataloaders.keys()):
                 # initialise metrics to track
                 auc = BinaryAUROC()
                 acc = BinaryAccuracy(threshold=0.5)
@@ -203,7 +203,7 @@ def fine_tune(
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
     # run fine tuning on pretrained model
-    model_ft, auc = train_model(
+    auc = train_model(
         model_ft,
         dataloaders,
         criterion,
@@ -237,8 +237,9 @@ def main(folds, save, how, num_epochs, learning_rate):
         fold_auc = fine_tune(device, dataloaders, how, num_epochs, learning_rate, save)
         aucs.append(fold_auc)
 
-    logger.info("------------------")
-    logger.info(f"Average val AUC: {sum(aucs)/folds:.4f}")
+    if folds > 0:
+        logger.info("------------------")
+        logger.info(f"Average val AUC: {sum(aucs)/folds:.4f}")
 
 
 if __name__ == "__main__":
