@@ -63,7 +63,17 @@ python inference.py
 Explain CV -split used for results 
 batch size, folds, epochs
 
-Model | Avg. Val AUC
---- | ---
-Baseline CNN | TBD
-ResNet18 | TBD
+5 - fold cross validation
+final model trained on all data
+batch size: 32 after augmentation
+10 epochs
+save model with highest Val AUC
+
+Model | Avg. Val AUC | Weigths
+--- | --- | ---
+Baseline CNN | 0.86 | None
+ResNet18 | 0.96 | IMAGENET1K_V1
+DenseNet-121 | 0.95 | IMAGENET1K_V1
+Swin-T | 0.94 | IMAGENET1K_V1
+VGG19-BN | TBD | IMAGENET1K_V1
+ResNet50 | 0.91 | IMAGENET1K_V2
