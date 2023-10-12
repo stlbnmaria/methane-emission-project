@@ -85,30 +85,47 @@ def train_model(
 
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
-                        # data augmentation HERE
+                        # data augmentation
                         # TODO: complete and maybe carve out as function
                         if phase == "train":
                             data_aug = nn.Sequential(
-                                transforms.Resize(256),
-                                transforms.CenterCrop(224),
+                                transforms.Resize(75),
+                                transforms.RandomCrop(64),
+                                transforms.RandomRotation(degrees=30),
+                                transforms.RandomHorizontalFlip(p=0.5),
+                                transforms.RandomVerticalFlip(p=0.5),
+                                transforms.RandomAdjustSharpness(2.0),
+                                transforms.RandomAutocontrast(p=0.5),
                                 transforms.Normalize(
                                     [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
                                 ),
-                            )
-                        if phase == "val":
-                            data_aug = nn.Sequential(
-                                transforms.Resize(256),
-                                transforms.CenterCrop(224),
+                            )    
+
+                            data_aug_input = nn.Sequential(
+                                # transforms.Resize(256),
+                                # transforms.RandomCrop(224),
                                 transforms.Normalize(
                                     [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
                                 ),
                             )
 
-                        inputs_aug = data_aug(inputs)
+                        if phase == "val":
+                            data_aug = nn.Sequential(
+                                #transforms.Resize(256),
+                                #transforms.RandomCrop(224),
+                                transforms.Normalize(
+                                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                                ),
+                            )
+
+                        inputs_aug = data_aug(inputs) # augmented data
+                        input_resize = data_aug_input(inputs) # original resized data depending on model
+                        inputs_comb = torch.cat((input_resize, inputs_aug), dim=0)  # Concatenate original and augmented data
+                        labels = torch.cat((labels, labels), dim=0)
                         #######################
 
                         # fine tune model - forward pass
-                        outputs = model(inputs_aug)
+                        outputs = model(inputs_comb)
                         # get probabilities with Softmax activation
                         probs = nn.Softmax(dim=1)(outputs)[:, 1]
                         # calculate loss
