@@ -3,10 +3,11 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
+from xgboost import XGBClassifier
 
 from dataloader import load_inference_data
 from dataloader import load_tabular_inference_data
-from xgboost import XGBClassifier
+
 
 
 @click.command()
