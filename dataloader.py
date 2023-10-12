@@ -157,9 +157,7 @@ def load_tabular_train_data(
         folds: int=5,
         rands: int=42,
         cv_shuffle: bool = True
-) -> Union[pd.DataFrame,
-           Tuple[pd.DataFrame, pd.DataFrame],
-           List[dict[str, pd.DataFrame]]]:
+) ->    List[dict[str, pd.DataFrame]]:
     """This function loads and transforms the tabular data 
     in such a way that it can easily be used for a ML pipeline
     Pay attention depenidng on number of folds the output data type will change.
@@ -172,7 +170,8 @@ def load_tabular_train_data(
         cv_shuffle (bool, optional): Whether to use cv_shuffle. Defaults to True.
 
     Returns:
-        Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame], List[dict[str, pd.DataFrame]]]: _description_
+        List[dict[str, pd.DataFrame]]]: list of dicts of training and validation tabular data
+        for cross-validation / train-val-split
     """
 
     # specify the columns to include
@@ -212,17 +211,15 @@ def load_tabular_train_data(
             train_data = base_data.iloc[train_idx]
             val_data = base_data.iloc[val_idx]
             cv_splits.append({"train": train_data, "val": val_data})
-            
-        return cv_splits
 
     elif folds == 1:
         # use a singular train_testsplit
         train_data, val_data = train_test_split(base_data, test_size=0.2, random_state=rands)
-        
-        return train_data, val_data
+        cv_splits = [{"train": train_data, "val": val_data}]
 
     elif folds == 0:
         # return all the transformed data
         train_data = base_data
+        cv_splits  = [{"train": train_data}]
         
-        return train_data
+    return cv_splits
