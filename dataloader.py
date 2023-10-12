@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -6,7 +7,7 @@ from sklearn.model_selection import KFold, train_test_split
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 
 def get_cv_dataloaders(
@@ -44,13 +45,13 @@ def get_cv_dataloaders(
         # sample the training dataset
         train_loader = torch.utils.data.DataLoader(
             base_data,
-            batch_size=32,
+            batch_size=16,
             sampler=train_sampler,
         )
         # sample the validation dataset
         valid_loader = torch.utils.data.DataLoader(
             base_data,
-            batch_size=32,
+            batch_size=16,
             sampler=valid_sampler,
         )
 
@@ -100,7 +101,7 @@ def load_train_data(
             base_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(10)
         )
         train_loader = torch.utils.data.DataLoader(
-            train_set, batch_size=32, shuffle=True
+            train_set, batch_size=16, shuffle=True
         )
         valid_loader = torch.utils.data.DataLoader(val_set, batch_size=32, shuffle=True)
 
@@ -108,7 +109,7 @@ def load_train_data(
     elif folds == 0:
         # load the whole train data as one for final model training
         train_loader = torch.utils.data.DataLoader(
-            base_dataset, batch_size=32, shuffle=True
+            base_dataset, batch_size=16, shuffle=True
         )
         train_data = [{"train": train_loader}]
 
@@ -152,13 +153,14 @@ def load_inference_data(
 
     return val_loader, filenames
 
+
 def load_tabular_train_data(
-        data_path: Path = Path("./data/train_data/metadata.csv"),
-        folds: int=5,
-        rands: int=42,
-        cv_shuffle: bool = True
-) ->    List[dict[str, pd.DataFrame]]:
-    """This function loads and transforms the tabular data 
+    data_path: Path = Path("./data/train_data/metadata.csv"),
+    folds: int = 5,
+    rands: int = 42,
+    cv_shuffle: bool = True,
+) -> List[dict[str, pd.DataFrame]]:
+    """This function loads and transforms the tabular data
     in such a way that it can easily be used for a ML pipeline
     Pay attention depenidng on number of folds the output data type will change.
 
@@ -180,26 +182,24 @@ def load_tabular_train_data(
     # Load the data into a DataFrame
     base_data = pd.read_csv(data_path, usecols=columns_to_needed)
 
+    # drop duplicate rows based on id_coords
+    base_data.drop_duplicates(subset="id_coord", inplace=True)
+
     # convert date column to datetime
-    base_data["date"] = pd.to_datetime(base_data['date'],
-                                       format="%Y%m%d",
-                                       errors='coerce')
-    
-    #data = base_data[["lat", "lon", "plume"]]
+    base_data["date"] = pd.to_datetime(
+        base_data["date"], format="%Y%m%d", errors="coerce"
+    )
 
     # adding month as column
     base_data["month"] = base_data["date"].dt.month
     # adding weekday as column
     base_data["weekday"] = base_data["date"].dt.weekday
     # droping date
-    base_data = base_data.drop(labels= "date", axis=1)
+    base_data = base_data.drop(labels="date", axis=1)
 
-    # transforming plumne from yes/no to 1/0
-    yes_no_mapping = {'yes':1, 'no':0}
+    # transforming plume from yes/no to 1/0
+    yes_no_mapping = {"yes": 1, "no": 0}
     base_data["plume"] = base_data["plume"].map(yes_no_mapping)
-
-    # X = base_data.drop(columns=["plume"])
-    # y = base_data["plume"]
 
     if folds > 1:
         # use sklearn kfold to split into random training/validation indices
@@ -214,12 +214,51 @@ def load_tabular_train_data(
 
     elif folds == 1:
         # use a singular train_testsplit
-        train_data, val_data = train_test_split(base_data, test_size=0.2, random_state=rands)
+        train_data, val_data = train_test_split(
+            base_data, test_size=0.2, random_state=rands
+        )
         cv_splits = [{"train": train_data, "val": val_data}]
 
     elif folds == 0:
         # return all the transformed data
         train_data = base_data
-        cv_splits  = [{"train": train_data}]
-        
+        cv_splits = [{"train": train_data}]
+
     return cv_splits
+
+
+def load_tabular_inference_data(
+    data_path: Path = Path("./data/test_data"),
+) -> List[dict[str, pd.DataFrame]]:
+    """This function loads and transforms the tabular data for inference
+
+    Args:
+        data_path (Path, optional): Path of the parent folder of test data. Defaults to Path("./data/test_data").
+
+    Returns:
+        List[dict[str, pd.DataFrame]]]: list of dicts of test tabular data
+    """
+
+    # specify the columns to include
+    columns_to_needed = ["date", "lat", "lon"]
+
+    # Load the data into a DataFrame
+    base_data = pd.read_csv(data_path / "metadata.csv", usecols=columns_to_needed)
+
+    # drop duplicate rows based on id_coords
+    base_data.drop_duplicates(subset="id_coord", inplace=True)
+
+    # convert date column to datetime
+    base_data["date"] = pd.to_datetime(
+        base_data["date"], format="%Y%m%d", errors="coerce"
+    )
+
+    # adding month as column
+    base_data["month"] = base_data["date"].dt.month
+    # adding weekday as column
+    base_data["weekday"] = base_data["date"].dt.weekday
+    # droping date
+    base_data = base_data.drop(labels="date", axis=1)
+
+    infer_data = [{"test": base_data, "filenames": os.listdir(data_path / "images")}]
+    return infer_data

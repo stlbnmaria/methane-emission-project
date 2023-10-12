@@ -15,10 +15,10 @@ def torch_inference(save: bool) -> pd.DataFrame:
     """
     This function predicts on the test data and saves a csv with path and probabilities.
 
-    Args: 
+    Args:
     :param save: if the predictions should be saved to csv
 
-    Returns: 
+    Returns:
     :returns: pandas dataframe with paths to img and probability predictions
     """
     # load inference data
@@ -114,4 +114,3 @@ if __name__ == "__main__":
     torch_inference()
     tabular_inference()
     ensemble_method()
-
