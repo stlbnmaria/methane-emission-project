@@ -10,10 +10,19 @@ from IPython.display import IFrame
 from streamlit_folium import st_folium
 from datetime import datetime
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="Historical Data")
 path = (
     os.getcwd() + "/" + ".." + "/" + "data" + "/" + "train_data" + "/" + "metadata.csv"
 )
+
+
+with st.sidebar:
+  i=0
+  while i <=13:
+    st.write("")
+    i +=1
+  st.image("logo-color.png", width=300)
+
 metadata = pd.read_csv(path)
 st.subheader("Relevant KPIs")
 st.markdown('----')
