@@ -253,10 +253,6 @@ def load_tabular_inference_data(
     # droping date
     base_data = base_data.drop(labels="date", axis=1)
 
-    # transforming plume from yes/no to 1/0
-    yes_no_mapping = {"yes": 1, "no": 0}
-    base_data["plume"] = base_data["plume"].map(yes_no_mapping)
-
     # return all the transformed data
     test_data = base_data
     cv_splits = [{"test": test_data}]
