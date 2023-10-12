@@ -16,6 +16,14 @@ path = (
 )
 
 st.markdown(
+    """
+    <style>
+
+        .main > div {
+            padding-top: 1.8rem;
+        }
+""", unsafe_allow_html=True)
+st.markdown(
         """
 
     <style>
@@ -42,21 +50,35 @@ with st.sidebar:
   while i <=13:
     st.write("")
     i +=1
-  st.image("logo-color.png", width=300)
+  st.image("logo.jpg", width=300)
 
 metadata = pd.read_csv(path)
 col0, col1, col2, col3 = st.columns(4)
 
-st.markdown(
-    """
-<style>
-[data-testid="stMetricValue"] {
-    font-size: 100px;
-}
-""",
-    unsafe_allow_html=True,
-)
 
+#border: 1px solid rgba(34, 114, 80, 0.6);
+st.markdown("""
+<style>
+div[data-testid="metric-container"] {
+   background-color: rgba(34, 114, 80, 1);
+   padding: 5% 5% 5% 10%;
+   border-radius: 5px;
+   color: rgb(255, 255, 255);
+   overflow-wrap: break-word;
+}
+ div[data-testid="stHorizontalBlock"] {
+            margin-bottom:-50px;
+ }
+
+/* breakline for metric text         */
+div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
+   overflow-wrap: break-word;
+   white-space: break-spaces;
+   color: White;
+   font-size: 28px;
+}
+"""
+, unsafe_allow_html=True)
 
 # Number of continents for which we have images
 col0.metric("\# continents", 4)
@@ -79,6 +101,33 @@ col3.metric(
     "\# non-leakages",
     len(metadata[metadata["plume"] == "no"]),
 )
+st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-16tkdie {
+            gap: 0.8rem;
+        }
+""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-xvtzic {
+            margin-top: -10px;
+        }
+""", unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-90gy28 {
+            margin-top: -5px;
+        }
+""", unsafe_allow_html=True)
+
+
 st.markdown('----')
 metadata = pd.read_csv(path)
 
@@ -102,6 +151,17 @@ def webapp_data_processing(data):
     return data
 
 metadata = webapp_data_processing(metadata)
+
+st.markdown(
+    """
+    <style>
+    [data-baseweb="select"] {
+        margin-top: -45px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 leak_bool = st.selectbox(
     "What do you wish to see?", np.array(["Leakages", "Non-leakages", "Both"])
@@ -179,7 +239,7 @@ for i in range(0,len(selected_metadata)):
             popup=popup,
             icon=folium.DivIcon(html=f"""
                 <div><svg>
-                    <circle cx="5" cy="5" r="5" fill="#5fd32c" />
+                    <circle cx="5" cy="5" r="5" fill="#A4DD66" />
                 </svg></div>""")
         ).add_to(n)
     else:

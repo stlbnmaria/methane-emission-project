@@ -14,6 +14,25 @@ from datetime import datetime
 st.set_page_config(layout="wide", page_title="Live Data")
 
 st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-1aehpvj {
+            font-size: 0px;
+        }
+""", unsafe_allow_html=True)
+
+
+st.markdown(
+    """
+    <style>
+
+        .main > div {
+            margin-top: -80px;
+        }
+""", unsafe_allow_html=True)
+
+st.markdown(
         """
 
     <style>
@@ -34,6 +53,30 @@ st.markdown(
         unsafe_allow_html=True,
     )
 
+st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-1uixxvy{
+            margin-bottom: 40px;
+        }
+""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-vskyf7{
+            margin-bottom: 40px;
+        }
+""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-1lx94gx{
+            margin-bottom: 40px;
+        }
+""", unsafe_allow_html=True)
 with st.sidebar:
   i=0
   while i <=13:
@@ -90,16 +133,28 @@ if metadata is not None:
 
     col0, col1, col2, col3 = st.columns(4)
 
-    st.markdown(
-        """
-    <style>
-    [data-testid="stMetricValue"] {
-        font-size: 100px;
-    }
-    """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("""
+<style>
+div[data-testid="metric-container"] {
+   background-color: rgba(34, 114, 80, 1);
+   padding: 5% 5% 5% 10%;
+   border-radius: 5px;
+   color: rgb(255, 255, 255);
+   overflow-wrap: break-word;
+}
+ div[data-testid="stHorizontalBlock"] {
+            margin-bottom:-40px;
+ }
 
+/* breakline for metric text         */
+div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
+   overflow-wrap: break-word;
+   white-space: break-spaces;
+   color: White;
+   font-size: 28px;
+}
+"""
+, unsafe_allow_html=True)
 
     # Number of continents for which we have images
     col0.metric("\# continents", 4)
@@ -122,6 +177,33 @@ if metadata is not None:
         "\# non-leakages",
         len(metadata[metadata["plume"] == "no"]),
     )
+
+    st.markdown(
+    """
+    <style>
+
+        .st-emotion-cache-16tkdie {
+            gap: 0.8rem;
+        }
+""", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <style>
+
+            .st-emotion-cache-xvtzic {
+                margin-top: -10px;
+            }
+    """, unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <style>
+
+            .st-emotion-cache-90gy28 {
+                margin-top: -8px;
+            }
+    """, unsafe_allow_html=True)
+
     st.markdown('----')
 
     def webapp_data_processing(data):
@@ -144,6 +226,16 @@ if metadata is not None:
         return data
 
     metadata = webapp_data_processing(metadata)
+
+    st.markdown(
+    """
+    <style>
+    [data-baseweb="select"] {
+        margin-top: -45px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,)
 
     leak_bool = st.selectbox(
         "What do you wish to see?", np.array(["Leakages", "Non-leakages", "Both"])
