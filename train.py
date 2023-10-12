@@ -14,8 +14,6 @@ from models.baseline_cnn import SimpleCNN
 from dataloader import load_train_data
 from models.data_augmentation import get_augmented_data
 
-# TODO: make typing specific in the end - when final
-
 
 # create and configure logger
 logging.basicConfig(filename="models/modeling.log", format="%(message)s", filemode="w")
@@ -24,7 +22,7 @@ logger.setLevel(logging.INFO)
 
 
 def train_model(
-    model: models,
+    model: models.resnet18,
     dataloaders: dict[str, torch.utils.data.DataLoader],
     criterion: nn.CrossEntropyLoss,
     optimizer: optim.SGD,
@@ -89,7 +87,9 @@ def train_model(
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
                         # data augmentation
-                        inputs_comb, labels = get_augmented_data(phase, inputs, labels, how)
+                        inputs_comb, labels = get_augmented_data(
+                            phase, inputs, labels, how
+                        )
 
                         # fine tune model - forward pass
                         outputs = model(inputs_comb)
@@ -138,8 +138,9 @@ def train_model(
 
         # save model to best.pt in models to be used for inference
         if save:
-            # load best model weights
-            model.load_state_dict(torch.load(best_model_params_path))
+            if "val" in list(dataloaders.keys()):
+                # load best model weights
+                model.load_state_dict(torch.load(best_model_params_path))
             torch.save(model.state_dict(), "./models/best.pt")
 
     return best_auc

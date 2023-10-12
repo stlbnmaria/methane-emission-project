@@ -43,13 +43,13 @@ def get_cv_dataloaders(
         # sample the training dataset
         train_loader = torch.utils.data.DataLoader(
             base_data,
-            batch_size=32,
+            batch_size=16,
             sampler=train_sampler,
         )
         # sample the validation dataset
         valid_loader = torch.utils.data.DataLoader(
             base_data,
-            batch_size=32,
+            batch_size=16,
             sampler=valid_sampler,
         )
 
@@ -99,7 +99,7 @@ def load_train_data(
             base_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(10)
         )
         train_loader = torch.utils.data.DataLoader(
-            train_set, batch_size=32, shuffle=True
+            train_set, batch_size=16, shuffle=True
         )
         valid_loader = torch.utils.data.DataLoader(val_set, batch_size=32, shuffle=True)
 
@@ -107,7 +107,7 @@ def load_train_data(
     elif folds == 0:
         # load the whole train data as one for final model training
         train_loader = torch.utils.data.DataLoader(
-            base_dataset, batch_size=32, shuffle=True
+            base_dataset, batch_size=16, shuffle=True
         )
         train_data = [{"train": train_loader}]
 
