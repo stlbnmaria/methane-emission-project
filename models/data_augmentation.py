@@ -8,7 +8,7 @@ def get_augmented_data(
     phase: str, inputs: torch.tensor, labels: torch.tensor, how: str
 ) -> Tuple[torch.tensor, torch.tensor]:
     """
-    Get the right data augmentation depending on 
+    Get the right data augmentation depending on
 
     Args:
     :param phase: phase in the training - either train or val
@@ -20,7 +20,7 @@ def get_augmented_data(
     Returns:
     :returns: tuple of augmented / resized & normalized inputs + labels
     """
-    # first define the transforms for the SimpleCNN model
+    # first define the transforms for the SimpleCNN model
     if how == "baseline":
         if phase == "train":
             data_aug = nn.Sequential(
@@ -31,19 +31,25 @@ def get_augmented_data(
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomAdjustSharpness(2.0),
                 transforms.RandomAutocontrast(p=0.5),
-                transforms.Normalize([0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]),
+                transforms.Normalize(
+                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                ),
             )
 
             data_aug_input = nn.Sequential(
-                transforms.Normalize([0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]),
+                transforms.Normalize(
+                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                ),
             )
 
         if phase == "val":
             data_aug = nn.Sequential(
-                transforms.Normalize([0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]),
+                transforms.Normalize(
+                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                ),
             )
 
-    # define transforms for torch pretrained model
+    # define transforms for torch pretrained model
     elif how == "pretrained":
         resize = 256
         crop = 224
@@ -56,30 +62,38 @@ def get_augmented_data(
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomAdjustSharpness(2.0),
                 transforms.RandomAutocontrast(p=0.5),
-                transforms.Normalize([0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]),
+                transforms.Normalize(
+                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                ),
             )
 
             data_aug_input = nn.Sequential(
                 transforms.Resize(resize),
                 transforms.RandomCrop(crop),
-                transforms.Normalize([0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]),
+                transforms.Normalize(
+                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                ),
             )
 
         if phase == "val":
             data_aug = nn.Sequential(
                 transforms.Resize(resize),
                 transforms.RandomCrop(crop),
-                transforms.Normalize([0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]),
+                transforms.Normalize(
+                    [0.2315, 0.2315, 0.2315], [0.2268, 0.2268, 0.2268]
+                ),
             )
 
     inputs_aug = data_aug(inputs)  # augmented data
     if phase == "train":
-        input_resize = data_aug_input(inputs)  # original resized data depending on model
+        input_resize = data_aug_input(
+            inputs
+        )  # original resized data depending on model
         inputs_comb = torch.cat(
             (input_resize, inputs_aug), dim=0
         )  # Concatenate original and augmented data
         labels = torch.cat((labels, labels), dim=0)
 
         return (inputs_comb, labels)
-    else: 
+    else:
         return (inputs_aug, labels)

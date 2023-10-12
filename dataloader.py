@@ -1,7 +1,9 @@
+import os
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from PIL import Image
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
@@ -150,3 +152,113 @@ def load_inference_data(
     filenames = [obj[0].split("/")[-1] for obj in base_dataset.imgs]
 
     return val_loader, filenames
+
+
+def load_tabular_train_data(
+    data_path: Path = Path("./data/train_data/metadata.csv"),
+    folds: int = 5,
+    rands: int = 42,
+    cv_shuffle: bool = True,
+) -> List[dict[str, pd.DataFrame]]:
+    """This function loads and transforms the tabular data
+    in such a way that it can easily be used for a ML pipeline
+    Pay attention depenidng on number of folds the output data type will change.
+
+    Args:
+        data_path (Path, optional): Path of the csv. Defaults to Path("./data/train_data/metadata.csv").
+        folds (int, optional): Number of folds wanted. Defaults to 5.
+        rands (int, optional): Number used for random state if the data
+        should be shuffeled before the cv-split. Defaults to 42.
+        cv_shuffle (bool, optional): Whether to use cv_shuffle. Defaults to True.
+
+    Returns:
+        List[dict[str, pd.DataFrame]]]: list of dicts of training and validation tabular data
+        for cross-validation / train-val-split
+    """
+
+    # specify the columns to include
+    columns_to_needed = ["date", "plume", "lat", "lon"]
+
+    # Load the data into a DataFrame
+    base_data = pd.read_csv(data_path, usecols=columns_to_needed)
+
+    # drop duplicate rows based on id_coords
+    base_data.drop_duplicates(subset="id_coord", inplace=True)
+
+    # convert date column to datetime
+    base_data["date"] = pd.to_datetime(
+        base_data["date"], format="%Y%m%d", errors="coerce"
+    )
+
+    # adding month as column
+    base_data["month"] = base_data["date"].dt.month
+    # adding weekday as column
+    base_data["weekday"] = base_data["date"].dt.weekday
+    # droping date
+    base_data = base_data.drop(labels="date", axis=1)
+
+    # transforming plume from yes/no to 1/0
+    yes_no_mapping = {"yes": 1, "no": 0}
+    base_data["plume"] = base_data["plume"].map(yes_no_mapping)
+
+    if folds > 1:
+        # use sklearn kfold to split into random training/validation indices
+        cv = KFold(n_splits=folds, random_state=rands, shuffle=cv_shuffle)
+
+        cv_splits = []
+
+        for train_idx, val_idx in cv.split(base_data.index):
+            train_data = base_data.iloc[train_idx]
+            val_data = base_data.iloc[val_idx]
+            cv_splits.append({"train": train_data, "val": val_data})
+
+    elif folds == 1:
+        # use a singular train_testsplit
+        train_data, val_data = train_test_split(
+            base_data, test_size=0.2, random_state=rands
+        )
+        cv_splits = [{"train": train_data, "val": val_data}]
+
+    elif folds == 0:
+        # return all the transformed data
+        train_data = base_data
+        cv_splits = [{"train": train_data}]
+
+    return cv_splits
+
+
+def load_tabular_inference_data(
+    data_path: Path = Path("./data/test_data"),
+) -> List[dict[str, pd.DataFrame]]:
+    """This function loads and transforms the tabular data for inference
+
+    Args:
+        data_path (Path, optional): Path of the parent folder of test data. Defaults to Path("./data/test_data").
+
+    Returns:
+        List[dict[str, pd.DataFrame]]]: list of dicts of test tabular data
+    """
+
+    # specify the columns to include
+    columns_to_needed = ["date", "lat", "lon"]
+
+    # Load the data into a DataFrame
+    base_data = pd.read_csv(data_path / "metadata.csv", usecols=columns_to_needed)
+
+    # drop duplicate rows based on id_coords
+    base_data.drop_duplicates(subset="id_coord", inplace=True)
+
+    # convert date column to datetime
+    base_data["date"] = pd.to_datetime(
+        base_data["date"], format="%Y%m%d", errors="coerce"
+    )
+
+    # adding month as column
+    base_data["month"] = base_data["date"].dt.month
+    # adding weekday as column
+    base_data["weekday"] = base_data["date"].dt.weekday
+    # droping date
+    base_data = base_data.drop(labels="date", axis=1)
+
+    infer_data = [{"test": base_data, "filenames": os.listdir(data_path / "images")}]
+    return infer_data
