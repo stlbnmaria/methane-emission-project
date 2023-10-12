@@ -24,7 +24,7 @@ source .venv/bin/activate
 To install requirements:
 
 ```bash
-pip install -r requirements.in
+pip install -r requirements.txt
 ```
 
 It is assumed that the user has the data and stored it in the root directory of the repo as indicated below:
