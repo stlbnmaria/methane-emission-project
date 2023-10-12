@@ -15,14 +15,14 @@ The data consists of satellite images of different locations. There are 428 anno
 ## Setup
 Create a virtual environment:
 
-```setup
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 To install requirements:
 
-```setup
+```bash
 pip install -r requirements.in
 ```
 
@@ -45,7 +45,13 @@ It is assumed that the user has the data and stored it in the root directory of 
 
 
 ## Run Training
+```bash
+python train.py
+```
 
 ## Run Inference
+```bash
+python inference.py
+```
 
 ## Results
