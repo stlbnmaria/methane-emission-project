@@ -6,7 +6,7 @@ from sklearn.model_selection import KFold, train_test_split
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 
 def get_cv_dataloaders(
@@ -152,13 +152,14 @@ def load_inference_data(
 
     return val_loader, filenames
 
+
 def load_tabular_train_data(
-        data_path: Path = Path("./data/train_data/metadata.csv"),
-        folds: int=5,
-        rands: int=42,
-        cv_shuffle: bool = True
-) ->    List[dict[str, pd.DataFrame]]:
-    """This function loads and transforms the tabular data 
+    data_path: Path = Path("./data/train_data/metadata.csv"),
+    folds: int = 5,
+    rands: int = 42,
+    cv_shuffle: bool = True,
+) -> List[dict[str, pd.DataFrame]]:
+    """This function loads and transforms the tabular data
     in such a way that it can easily be used for a ML pipeline
     Pay attention depenidng on number of folds the output data type will change.
 
@@ -181,21 +182,21 @@ def load_tabular_train_data(
     base_data = pd.read_csv(data_path, usecols=columns_to_needed)
 
     # convert date column to datetime
-    base_data["date"] = pd.to_datetime(base_data['date'],
-                                       format="%Y%m%d",
-                                       errors='coerce')
-    
-    #data = base_data[["lat", "lon", "plume"]]
+    base_data["date"] = pd.to_datetime(
+        base_data["date"], format="%Y%m%d", errors="coerce"
+    )
+
+    # data = base_data[["lat", "lon", "plume"]]
 
     # adding month as column
     base_data["month"] = base_data["date"].dt.month
     # adding weekday as column
     base_data["weekday"] = base_data["date"].dt.weekday
     # droping date
-    base_data = base_data.drop(labels= "date", axis=1)
+    base_data = base_data.drop(labels="date", axis=1)
 
     # transforming plume from yes/no to 1/0
-    yes_no_mapping = {'yes':1, 'no':0}
+    yes_no_mapping = {"yes": 1, "no": 0}
     base_data["plume"] = base_data["plume"].map(yes_no_mapping)
 
     # X = base_data.drop(columns=["plume"])
@@ -214,22 +215,24 @@ def load_tabular_train_data(
 
     elif folds == 1:
         # use a singular train_testsplit
-        train_data, val_data = train_test_split(base_data, test_size=0.2, random_state=rands)
+        train_data, val_data = train_test_split(
+            base_data, test_size=0.2, random_state=rands
+        )
         cv_splits = [{"train": train_data, "val": val_data}]
 
     elif folds == 0:
         # return all the transformed data
         train_data = base_data
-        cv_splits  = [{"train": train_data}]
-        
+        cv_splits = [{"train": train_data}]
+
     return cv_splits
 
 
 def load_tabular_inference_data(
-        data_path: Path = Path("./data/test_data/metadata.csv"),
-) ->    List[dict[str, pd.DataFrame]]:
+    data_path: Path = Path("./data/test_data/metadata.csv"),
+) -> List[dict[str, pd.DataFrame]]:
     """This function loads and transforms the tabular data for inference
-   
+
     Args:
         data_path (Path, optional): Path of the csv. Defaults to Path("./data/test_data/metadata.csv").
 
@@ -244,25 +247,25 @@ def load_tabular_inference_data(
     base_data = pd.read_csv(data_path, usecols=columns_to_needed)
 
     # convert date column to datetime
-    base_data["date"] = pd.to_datetime(base_data['date'],
-                                       format="%Y%m%d",
-                                       errors='coerce')
-    
-    #data = base_data[["lat", "lon", "plume"]]
+    base_data["date"] = pd.to_datetime(
+        base_data["date"], format="%Y%m%d", errors="coerce"
+    )
+
+    # data = base_data[["lat", "lon", "plume"]]
 
     # adding month as column
     base_data["month"] = base_data["date"].dt.month
     # adding weekday as column
     base_data["weekday"] = base_data["date"].dt.weekday
     # droping date
-    base_data = base_data.drop(labels= "date", axis=1)
+    base_data = base_data.drop(labels="date", axis=1)
 
     # transforming plume from yes/no to 1/0
-    yes_no_mapping = {'yes':1, 'no':0}
+    yes_no_mapping = {"yes": 1, "no": 0}
     base_data["plume"] = base_data["plume"].map(yes_no_mapping)
 
     # return all the transformed data
     test_data = base_data
-    cv_splits  = [{"test": test_data}]
-        
+    cv_splits = [{"test": test_data}]
+
     return cv_splits
