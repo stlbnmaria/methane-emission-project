@@ -57,4 +57,6 @@ python train.py
 python inference.py
 ```
 
+## Run the App
+
 ## Results
