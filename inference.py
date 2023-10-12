@@ -1,4 +1,5 @@
 import click
+import os
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -10,8 +11,8 @@ from dataloader import load_tabular_inference_data
 
 
 
-@click.command()
-@click.option("--save", "-s", default=True, type=bool)
+# @click.command()
+# @click.option("--save", "-s", default=True, type=bool)
 def torch_inference(save: bool) -> pd.DataFrame:
     """
     This function predicts on the test data and saves a csv with path and probabilities.
@@ -52,13 +53,14 @@ def torch_inference(save: bool) -> pd.DataFrame:
     # save predictions as csv for hand in
     out_df = pd.DataFrame({"path": filenames, "label": preds})
     if save:
+        os.makedirs("predictions/", exist_ok=True)
         out_df.to_csv("predictions/submission_test_file.csv", index=False)
     
     return out_df
 
-@click.command()
-@click.option("--save", "-s", default=True, type=bool)
-def tabular_inference(save: bool)-> pd.DataFrame:
+# @click.command()
+# @click.option("--save_t", default=True, type=bool)
+def tabular_inference(save_t: bool)-> pd.DataFrame:
     """ This function predicts on the tabular meta-test-data and saves a csv
         with path and probabilities.
 
@@ -77,17 +79,20 @@ def tabular_inference(save: bool)-> pd.DataFrame:
 
     y_pred = loaded_model.predict_proba(test_df)
     y_pred = y_pred[:, 1]
+    print(len(filenames))
+    print(len(y_pred))
 
     out_df_tab = pd.DataFrame({"path":filenames, "label": y_pred})
 
-    if save:
+    if save_t:
+        os.makedirs("predictions/", exist_ok=True)
         out_df_tab.to_csv("predictions/submission_test_tabular.csv", index=False)
     return out_df_tab
 
 
-@click.command()
-@click.option("--save", "-s", default=True, type=bool)
-def ensemble_method(save: bool)-> pd.DataFrame:
+# @click.command()
+# @click.option("--save_e", default=True, type=bool)
+def ensemble_method(save_e: bool)-> pd.DataFrame:
     """using weighted average to combine image predictions
        and tabular predictions to one unified predictions csv
 
@@ -107,11 +112,12 @@ def ensemble_method(save: bool)-> pd.DataFrame:
     
     merged_df.drop(["label_x", "label_y"], axis=1, inplace=True)
 
-    if save:
+    if save_e:
+        os.makedirs("predictions/", exist_ok=True)
         merged_df.to_csv("predictions/submission_ensemble.csv", index=False)
     return merged_df
 
 if __name__ == "__main__":
-    torch_inference()
-    tabular_inference()
-    ensemble_method()
+    torch_inference(True)
+    tabular_inference(True)
+    ensemble_method(True)

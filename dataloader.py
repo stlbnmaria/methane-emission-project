@@ -177,13 +177,15 @@ def load_tabular_train_data(
     """
 
     # specify the columns to include
-    columns_to_needed = ["date", "plume", "lat", "lon"]
+    columns_to_needed = ["date", "plume", "lat", "lon",
+                         "id_coord","coord_x","coord_y"]
 
     # Load the data into a DataFrame
     base_data = pd.read_csv(data_path, usecols=columns_to_needed)
 
     # drop duplicate rows based on id_coords
-    base_data.drop_duplicates(subset="id_coord", inplace=True)
+    base_data.drop_duplicates(subset=["id_coord","date","coord_x","coord_y"], inplace=True)
+    base_data.drop(["id_coord","coord_x","coord_y"], axis=1, inplace=True)
 
     # convert date column to datetime
     base_data["date"] = pd.to_datetime(
@@ -240,13 +242,15 @@ def load_tabular_inference_data(
     """
 
     # specify the columns to include
-    columns_to_needed = ["date", "lat", "lon"]
+    columns_to_needed = ["date", "lat", "lon",
+                         "id_coord","coord_x","coord_y"]
 
     # Load the data into a DataFrame
     base_data = pd.read_csv(data_path / "metadata.csv", usecols=columns_to_needed)
 
     # drop duplicate rows based on id_coords
-    base_data.drop_duplicates(subset="id_coord", inplace=True)
+    base_data.drop_duplicates(subset=["id_coord","date","coord_x","coord_y"], inplace=True)
+    base_data.drop(["id_coord","coord_x","coord_y"], axis=1, inplace=True)
 
     # convert date column to datetime
     base_data["date"] = pd.to_datetime(
