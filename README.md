@@ -64,13 +64,13 @@ streamlit run first.py
 ## Results
 The image classification was trained on a 5-fold cross validation split with batch size 32 (after data augmentation). Each fold runs for 10 epochs with an SGD optimizer with momentum and decay.
 
-Model | Avg. Val AUC | Weigths
---- | --- | ---
-Baseline CNN | 0.86 | None
-ResNet18 | 0.96 | IMAGENET1K_V1
-DenseNet-121 | 0.95 | IMAGENET1K_V1
-Swin-T | 0.95 | IMAGENET1K_V1
-VGG19-BN | 0.94 | IMAGENET1K_V1
-ResNet50 | 0.91 | IMAGENET1K_V2
+Model | Weigths | Avg. Val AUC | Test AUC
+--- | --- | --- | ---
+Baseline CNN | - | 0.86 | -
+ResNet18 | IMAGENET1K_V1 | 0.96 | 0.96
+DenseNet-121 | IMAGENET1K_V1 | 0.95 | -
+Swin-T | IMAGENET1K_V1 | 0.95 | -
+VGG19-BN | IMAGENET1K_V1 | 0.94 | -
+ResNet50 | IMAGENET1K_V2 | 0.91 | -
 
 For the final submissions the best model (ResNet18) was fine tuned on the whole dataset. The right number of epochs was inferred by the validation results from the previous step.
