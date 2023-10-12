@@ -13,6 +13,8 @@ from tempfile import TemporaryDirectory
 from models.baseline_cnn import SimpleCNN
 from dataloader import load_train_data
 
+# TODO: make typing specific in the end - when final
+
 
 # create and configure logger
 logging.basicConfig(filename="models/modeling.log", format="%(message)s", filemode="w")
