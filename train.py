@@ -138,8 +138,9 @@ def train_model(
 
         # save model to best.pt in models to be used for inference
         if save:
-            # load best model weights
-            model.load_state_dict(torch.load(best_model_params_path))
+            if "val" in list(dataloaders.keys()):
+                # load best model weights
+                model.load_state_dict(torch.load(best_model_params_path))
             torch.save(model.state_dict(), "./models/best.pt")
 
     return best_auc
