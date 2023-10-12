@@ -20,8 +20,10 @@ for fold in cv_splits:
     model = XGBClassifier()
     model.fit(X_train, y_train)
 
+    model.save_model("./models/best_xgb.json")
+    
     y_pred = model.predict_proba(X_val)
-    print(y_pred)
+    #print(y_pred)
     y_pred = y_pred[:, 1]
 
     auc = roc_auc_score(y_val, y_pred)
