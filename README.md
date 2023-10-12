@@ -3,7 +3,7 @@
 Authors: Alvaro Calafell, João Melo, Steve Moses, Harshit Shangari, Thomas Schneider & Maria Stoelben
 
 ## Data
-The data consists of satellite images of different locations. There are 428 annotated images and 108 test images. The data is labeled with whether a location contains a methane plume or not. The image size is 64 x 64 pixels with one channel, i.e. grayscale images. Additionally, metadata of the images was provided, incl. longitude, latitude, date and coordinates of the plume. Below example images from the data as well as the geographical locations are displayed.
+The data consists of satellite images of different locations. There are 428 annotated images and 108 test images. The data is labeled with whether a location contains a methane plume or not. The image size is 64 x 64 pixels with one channel, i.e. grayscale images. Additionally, metadata of the images was provided, incl. longitude, latitude, date and coordinates of the plume. The month, weekday, longitude and latitude were used from the tabular data for training the model. Below example images from the data as well as the geographical locations are displayed.
 
 <p float="left">
   <img src='EDA/example_img.png' width="46%" />
@@ -62,15 +62,17 @@ streamlit run first.py
 ```
 
 ## Results
-The image classification was trained on a 5-fold cross validation split with batch size 32 (after data augmentation). Each fold runs for 10 epochs with an SGD optimizer with momentum and decay.
+The image classification was trained on a 5-fold cross validation split with batch size 32 (after data augmentation). Each fold runs for 10 epochs with an SGD optimizer with momentum and decay. The training on the tabular data was done using the XGBoost Classifier on a 5-fold cross validation split.
 
 Model | Weigths | Avg. Val AUC | Test AUC
 --- | --- | --- | ---
-Baseline CNN | - | 0.86 | -
+Ensemble (ResNet18 & XGBoost) | - | - | 1.00
 ResNet18 | IMAGENET1K_V1 | 0.96 | 0.96
 DenseNet-121 | IMAGENET1K_V1 | 0.95 | -
 Swin-T | IMAGENET1K_V1 | 0.95 | -
 VGG19-BN | IMAGENET1K_V1 | 0.94 | -
 ResNet50 | IMAGENET1K_V2 | 0.91 | -
+Baseline CNN | - | 0.86 | -
 
-For the final submissions the best model (ResNet18) was fine tuned on the whole dataset. The right number of epochs was inferred by the validation results from the previous step.
+
+For the final submissions, the best model (Ensemble model - mix between ResNet18 and XGBoost Classifier) was fine tuned on the whole dataset. The right number of epochs was inferred by the validation results from the previous step. A weight of 65% was assigned to the ResNet18 and 35% to the XGBoost Classifier.

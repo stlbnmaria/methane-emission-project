@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from xgboost import XGBClassifier
+from pathlib import Path
 
 from dataloader import load_inference_data
 from dataloader import load_tabular_inference_data
@@ -21,7 +22,7 @@ def torch_inference(save: bool = True) -> pd.DataFrame:
     :returns: pandas dataframe with paths to img and probability predictions
     """
     # load inference data
-    val_data, filenames = load_inference_data()
+    val_data, filenames = load_inference_data(data_path=path_)
     preds = []
 
     # set up model
