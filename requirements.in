@@ -24,8 +24,8 @@ torcheval==0.0.7
 torch==2.1.0
 torchvision==0.16.0
 scikit-learn==1.3.1
+xgboost==2.0.0
 
 #web app
 streamlit == 1.27.2
 streamlit_folium == 0.15.0
-
