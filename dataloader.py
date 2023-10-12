@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -181,6 +182,9 @@ def load_tabular_train_data(
     # Load the data into a DataFrame
     base_data = pd.read_csv(data_path, usecols=columns_to_needed)
 
+    # drop duplicate rows based on id_coords
+    base_data.drop_duplicates(subset="id_coord", inplace=True)
+
     # convert date column to datetime
     base_data["date"] = pd.to_datetime(
         base_data["date"], format="%Y%m%d", errors="coerce"
@@ -224,12 +228,12 @@ def load_tabular_train_data(
 
 
 def load_tabular_inference_data(
-    data_path: Path = Path("./data/test_data/metadata.csv"),
+    data_path: Path = Path("./data/test_data"),
 ) -> List[dict[str, pd.DataFrame]]:
     """This function loads and transforms the tabular data for inference
 
     Args:
-        data_path (Path, optional): Path of the csv. Defaults to Path("./data/test_data/metadata.csv").
+        data_path (Path, optional): Path of the parent folder of test data. Defaults to Path("./data/test_data").
 
     Returns:
         List[dict[str, pd.DataFrame]]]: list of dicts of test tabular data
@@ -239,7 +243,10 @@ def load_tabular_inference_data(
     columns_to_needed = ["date", "lat", "lon"]
 
     # Load the data into a DataFrame
-    base_data = pd.read_csv(data_path, usecols=columns_to_needed)
+    base_data = pd.read_csv(data_path / "metadata.csv", usecols=columns_to_needed)
+
+    # drop duplicate rows based on id_coords
+    base_data.drop_duplicates(subset="id_coord", inplace=True)
 
     # convert date column to datetime
     base_data["date"] = pd.to_datetime(
@@ -253,8 +260,5 @@ def load_tabular_inference_data(
     # droping date
     base_data = base_data.drop(labels="date", axis=1)
 
-    # return all the transformed data
-    test_data = base_data
-    cv_splits = [{"test": test_data}]
-
-    return cv_splits
+    infer_data = [{"test": base_data, "filenames": os.listdir(data_path / "images")}]
+    return infer_data
